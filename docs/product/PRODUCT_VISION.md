@@ -234,7 +234,7 @@ The platform will prioritize long-term quality over short-term speed.
 Although Version 1 focuses on furniture commerce, the long-term ambition is much broader.
 
 T.Fundi aims to become the operating system for the furniture industry by connecting customers, businesses, manufacturers, suppliers, educators, and future craftsmen through one unified digital ecosystem.
-
+---
 # 16. Product Scope
 
 ## Version 1
