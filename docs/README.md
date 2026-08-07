@@ -34,8 +34,8 @@ Welcome to the official documentation for the T.Fundi platform.
 
 ## 📜 Architecture Decision Records (ADRs)
 
-- [ADR-0001 Multi-Tenant Architecture](decisions/ADR-0001-multi-tenant.md)
-- [ADR-0002 Monorepo Architecture](decisions/ADR-0002-monorepo.md)
+- [ADR-0001 Multi-Tenant Architecture](engineering/ADR/ADR-0001-multi-tenant-platform.md)
+- [ADR-0002 Tenant-Configurable Authorization](engineering/ADR/ADR-0002-tenant-configurable-authorization.md)
 - [ADR-0003 AI Service Architecture](decisions/ADR-0003-ai-service.md)
 
 ---
