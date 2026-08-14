@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: tfundi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tfundi
+      POSTGRES_PASSWORD: tfundi_dev
+      POSTGRES_DB: tfundi
+    ports:
+      - "5432:5432"
+    volumes:
+      - tfundi_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  tfundi_postgres_data:
