@@ -11,8 +11,8 @@ export const getTenantByHost = async (
   if (host === "localhost") {
     return {
       id: "tenant-1",
-      name: "Acme Furniture",
-      slug: "acme",
+      name: "Ropa Furnitures",
+      slug: "ropa",
       branding: {
         primaryColor: "#7C3AED",
         primaryForeground: "#FFFFFF",

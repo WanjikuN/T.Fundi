@@ -15,6 +15,7 @@ interface TenantContextValue {
   tenant: Tenant | null;
   isLoading: boolean;
   error: string | null;
+  updateBranding: (branding: Partial<Tenant["branding"]>) => void;
 }
 
 const TenantContext = createContext<TenantContextValue | undefined>(undefined);
@@ -27,7 +28,21 @@ const TenantProvider = ({ children }: TenantProviderProps) => {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const updateBranding = (branding: Partial<Tenant["branding"]>) => {
+    setTenant((currentTenant) => {
+      if (!currentTenant) {
+        return currentTenant;
+      }
 
+      return {
+        ...currentTenant,
+        branding: {
+          ...currentTenant.branding,
+          ...branding,
+        },
+      };
+    });
+  };
   useEffect(() => {
     const loadTenant = async () => {
       try {
@@ -95,6 +110,7 @@ const TenantProvider = ({ children }: TenantProviderProps) => {
         tenant,
         isLoading,
         error,
+        updateBranding,
       }}
     >
       <div style={themeStyles}>{children}</div>

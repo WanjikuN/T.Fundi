@@ -1,11 +1,17 @@
+import { useTenant } from "../../../app/providers/TenantProvider";
+
 const DashboardPage = () => {
+  const { tenant } = useTenant();
+
+  if (!tenant) {
+    return null;
+  }
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-5xl">
         <h1 className="text-2xl font-bold sm:text-3xl">
-          Welcome to T.Fundi
+          Welcome to {tenant.name}
         </h1>
-
         <p className="mt-2 text-sm text-[var(--color-muted-foreground)] sm:text-base">
           Your furniture business workspace.
         </p>

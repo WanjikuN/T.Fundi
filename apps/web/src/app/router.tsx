@@ -8,6 +8,7 @@ import AIStudioPage from "../features/ai-studio/pages/AIStudioPage";
 import OrdersPage from "../features/commerce/pages/OrdersPage";
 import WorkshopPage from "../features/workshop/pages/WorkshopPage";
 import SettingsPage from "../features/identity/pages/SettingsPage";
+import BrandingPage from "../features/tenant/pages/BrandingPage";
 
 const router = createBrowserRouter([
   {
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
       {
         path: "/settings",
         element: <SettingsPage />,
+      },
+      {
+        path: "/settings/branding",
+        element: <BrandingPage />,
       },
     ],
   },
