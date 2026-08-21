@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { X } from "lucide-react";
 import { navigationItems } from "../../config/navigation";
