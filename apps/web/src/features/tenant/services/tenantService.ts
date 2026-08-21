@@ -8,7 +8,7 @@ export const getTenantByHost = async (
   // Temporary mock response.
   // This will later be replaced with a real API request.
 
-  if (host === "localhost") {
+  if (host === "localhost" || host === "tfundi.vercel.app" ) {
     return {
       id: "tenant-1",
       name: "Ropa Furnitures",
