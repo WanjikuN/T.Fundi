@@ -10,6 +10,7 @@ import {
 import { resolveTenantHost } from "../../features/tenant/resolveTenant";
 import { getTenantByHost } from "../../features/tenant/services/tenantService";
 import type { Tenant } from "../../features/tenant/types";
+import { Toaster } from "sonner";
 
 interface TenantContextValue {
   tenant: Tenant | null;
@@ -18,6 +19,7 @@ interface TenantContextValue {
   updateBranding: (branding: Partial<Tenant["branding"]>) => void;
   saveBranding: () => void;
   resetBranding: () => void;
+  hasUnsavedChanges: boolean;
 }
 
 const TenantContext = createContext<TenantContextValue | undefined>(undefined);
@@ -49,12 +51,34 @@ const TenantProvider = ({ children }: TenantProviderProps) => {
     });
   };
   const saveBranding = () => {
-  if (!tenant) {
-    return;
-  }
+    if (!tenant) {
+      return;
+    }
 
-  setSavedBranding(tenant.branding);
-};
+    setSavedBranding(tenant.branding);
+  };
+  const brandingHasChanged = (
+    current: Tenant["branding"],
+    saved: Tenant["branding"],
+  ) => {
+    return (
+      current.primaryColor !== saved.primaryColor ||
+      current.primaryForeground !== saved.primaryForeground ||
+      current.secondaryColor !== saved.secondaryColor ||
+      current.secondaryForeground !== saved.secondaryForeground ||
+      current.accentColor !== saved.accentColor ||
+      current.accentForeground !== saved.accentForeground ||
+      current.backgroundColor !== saved.backgroundColor ||
+      current.foregroundColor !== saved.foregroundColor ||
+      current.mutedColor !== saved.mutedColor ||
+      current.mutedForeground !== saved.mutedForeground ||
+      current.logoUrl !== saved.logoUrl
+    );
+  };
+  const hasUnsavedChanges =
+    tenant !== null &&
+    savedBranding !== null &&
+    brandingHasChanged(tenant.branding, savedBranding);
   const resetBranding = () => {
     if (!savedBranding) {
       return;
@@ -142,9 +166,14 @@ const TenantProvider = ({ children }: TenantProviderProps) => {
         updateBranding,
         saveBranding,
         resetBranding,
+        hasUnsavedChanges,
       }}
     >
-      <div style={themeStyles}>{children}</div>
+      <div style={themeStyles}>
+        {" "}
+        <Toaster position="top-right" richColors />
+        {children}
+      </div>
     </TenantContext.Provider>
   );
 };
