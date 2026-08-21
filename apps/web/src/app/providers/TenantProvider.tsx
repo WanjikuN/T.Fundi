@@ -16,6 +16,8 @@ interface TenantContextValue {
   isLoading: boolean;
   error: string | null;
   updateBranding: (branding: Partial<Tenant["branding"]>) => void;
+  saveBranding: () => void;
+  resetBranding: () => void;
 }
 
 const TenantContext = createContext<TenantContextValue | undefined>(undefined);
@@ -28,6 +30,9 @@ const TenantProvider = ({ children }: TenantProviderProps) => {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [savedBranding, setSavedBranding] = useState<Tenant["branding"] | null>(
+    null,
+  );
   const updateBranding = (branding: Partial<Tenant["branding"]>) => {
     setTenant((currentTenant) => {
       if (!currentTenant) {
@@ -43,6 +48,29 @@ const TenantProvider = ({ children }: TenantProviderProps) => {
       };
     });
   };
+  const saveBranding = () => {
+  if (!tenant) {
+    return;
+  }
+
+  setSavedBranding(tenant.branding);
+};
+  const resetBranding = () => {
+    if (!savedBranding) {
+      return;
+    }
+
+    setTenant((currentTenant) => {
+      if (!currentTenant) {
+        return currentTenant;
+      }
+
+      return {
+        ...currentTenant,
+        branding: savedBranding,
+      };
+    });
+  };
   useEffect(() => {
     const loadTenant = async () => {
       try {
@@ -55,6 +83,7 @@ const TenantProvider = ({ children }: TenantProviderProps) => {
         }
 
         setTenant(tenantData);
+        setSavedBranding(tenantData.branding);
       } catch {
         setError("We couldn't load this workspace.");
       } finally {
@@ -111,6 +140,8 @@ const TenantProvider = ({ children }: TenantProviderProps) => {
         isLoading,
         error,
         updateBranding,
+        saveBranding,
+        resetBranding,
       }}
     >
       <div style={themeStyles}>{children}</div>
