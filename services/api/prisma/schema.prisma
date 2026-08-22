@@ -31,6 +31,18 @@ model Tenant {
   name String
   slug String @unique
 
+  primaryColor          String @default("#8B4513")
+  primaryForeground     String @default("#FFFFFF")
+  secondaryColor        String @default("#F5E6D3")
+  secondaryForeground   String @default("#3D2B1F")
+  accentColor           String @default("#D97706")
+  accentForeground      String @default("#FFFFFF")
+  backgroundColor       String @default("#FFFFFF")
+  foregroundColor       String @default("#1F2937")
+  mutedColor            String @default("#F3F4F6")
+  mutedForeground       String @default("#6B7280")
+  logoUrl               String?
+  
   memberships TenantMembership[]
   roles       Role[]
 

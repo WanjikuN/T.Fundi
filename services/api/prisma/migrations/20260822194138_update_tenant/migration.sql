@@ -1,0 +1,12 @@
+-- AlterTable
+ALTER TABLE "Tenant" ADD COLUMN     "accentColor" TEXT NOT NULL DEFAULT '#D97706',
+ADD COLUMN     "accentForeground" TEXT NOT NULL DEFAULT '#FFFFFF',
+ADD COLUMN     "backgroundColor" TEXT NOT NULL DEFAULT '#FFFFFF',
+ADD COLUMN     "foregroundColor" TEXT NOT NULL DEFAULT '#1F2937',
+ADD COLUMN     "logoUrl" TEXT,
+ADD COLUMN     "mutedColor" TEXT NOT NULL DEFAULT '#F3F4F6',
+ADD COLUMN     "mutedForeground" TEXT NOT NULL DEFAULT '#6B7280',
+ADD COLUMN     "primaryColor" TEXT NOT NULL DEFAULT '#8B4513',
+ADD COLUMN     "primaryForeground" TEXT NOT NULL DEFAULT '#FFFFFF',
+ADD COLUMN     "secondaryColor" TEXT NOT NULL DEFAULT '#F5E6D3',
+ADD COLUMN     "secondaryForeground" TEXT NOT NULL DEFAULT '#3D2B1F';
