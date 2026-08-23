@@ -12,6 +12,20 @@ enum UserStatus {
   DEACTIVATED
 }
 
+enum PlatformRole {
+  PLATFORM_OWNER
+  PLATFORM_ADMIN
+  PLATFORM_OPERATIONS
+  PLATFORM_SUPPORT
+}
+
+enum TenantStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -20,6 +34,10 @@ model User {
   lastName     String
   status       UserStatus @default(ACTIVE)
 
+  // Platform-level access.
+  // Null means this user is not a T.Fundi platform administrator.
+  platformRole PlatformRole?
+
   memberships TenantMembership[]
 
   createdAt DateTime @default(now())
@@ -27,22 +45,24 @@ model User {
 }
 
 model Tenant {
-  id   String @id @default(uuid())
-  name String
-  slug String @unique
+  id     String       @id @default(uuid())
+  name   String
+  slug   String       @unique
+  status TenantStatus @default(PENDING)
 
-  primaryColor          String @default("#8B4513")
-  primaryForeground     String @default("#FFFFFF")
-  secondaryColor        String @default("#F5E6D3")
-  secondaryForeground   String @default("#3D2B1F")
-  accentColor           String @default("#D97706")
-  accentForeground      String @default("#FFFFFF")
-  backgroundColor       String @default("#FFFFFF")
-  foregroundColor       String @default("#1F2937")
-  mutedColor            String @default("#F3F4F6")
-  mutedForeground       String @default("#6B7280")
-  logoUrl               String?
-  
+  // Tenant branding
+  primaryColor        String  @default("#8B4513")
+  primaryForeground   String  @default("#FFFFFF")
+  secondaryColor      String  @default("#F5E6D3")
+  secondaryForeground String  @default("#3D2B1F")
+  accentColor         String  @default("#D97706")
+  accentForeground    String  @default("#FFFFFF")
+  backgroundColor     String  @default("#FFFFFF")
+  foregroundColor     String  @default("#1F2937")
+  mutedColor          String  @default("#F3F4F6")
+  mutedForeground     String  @default("#6B7280")
+  logoUrl             String?
+
   memberships TenantMembership[]
   roles       Role[]
 
