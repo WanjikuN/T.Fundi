@@ -12,7 +12,7 @@ export const openapi = {
       description: "Local development",
     },
     {
-      url: "https://t-fundi.vercel.app/",
+      url: "https://t-fundi.vercel.app",
       description: "Production",
     },
   ],
