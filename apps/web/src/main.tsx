@@ -6,11 +6,14 @@ import "./index.css";
 
 import router from "./app/router";
 import TenantProvider from "./app/providers/TenantProvider";
+import AuthProvider from "./app/providers/AuthProvider";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <TenantProvider>
-      <RouterProvider router={router} />
-    </TenantProvider>
+    <AuthProvider>
+      <TenantProvider>
+        <RouterProvider router={router} />
+      </TenantProvider>
+    </AuthProvider>
   </StrictMode>,
 );

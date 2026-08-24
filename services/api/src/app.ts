@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 
 import { router } from "./routes/index.js";
@@ -6,10 +7,15 @@ import { openapi } from "./docs/openapi.js";
 
 const app = express();
 
-app.use((req, _res, next) => {
-  console.log("REQUEST:", req.method, req.url);
-  next();
-});
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+    ],
+    credentials: true,
+  }),
+);
 
 app.use(express.json());
 
@@ -20,8 +26,6 @@ app.get("/docs/openapi.json", (_req, res) => {
 });
 
 app.get("/health", (_req, res) => {
-  console.log("HEALTH ROUTE HIT");
-
   res.status(200).json({
     status: "ok",
     service: "t.fundi-api",

@@ -118,6 +118,52 @@ export const openapi = {
         },
       },
     },
+    "/api/auth/login": {
+      post: {
+        tags: ["Authentication"],
+        summary: "Login a user",
+        description:
+          "Authenticates a user using their email and password and returns an access token.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/LoginRequest",
+              },
+              example: {
+                email: "test@example.com",
+                password: "password123",
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: "Login successful",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/LoginResponse",
+                },
+              },
+            },
+          },
+          400: {
+            description: "Invalid login data",
+          },
+          401: {
+            description: "Invalid email or password",
+          },
+          403: {
+            description: "User account is suspended or deactivated",
+          },
+          500: {
+            description: "Internal server error",
+          },
+        },
+      },
+    },
   },
 
   components: {
