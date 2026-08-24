@@ -12,7 +12,7 @@ import {
   revokeRefreshToken,
   isRefreshTokenValid,
 } from "./refresh-token.js";
-
+import type { AuthenticatedRequest } from "./auth.middleware.js";
 export async function register(req: Request, res: Response) {
   const result = registerSchema.safeParse(req.body);
 
@@ -141,4 +141,14 @@ export async function refresh(req: Request, res: Response) {
       message: "Unable to refresh token",
     });
   }
+}
+export async function me(
+  req: Request,
+  res: Response,
+) {
+  const user = (req as AuthenticatedRequest).user;
+
+  return res.status(200).json({
+    user,
+  });
 }
