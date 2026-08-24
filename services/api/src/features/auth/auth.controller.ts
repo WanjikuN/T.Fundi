@@ -1,7 +1,18 @@
 import type { Request, Response } from "express";
+
 import { registerSchema, loginSchema } from "./auth.schemas.js";
+
 import { registerUser, loginUser } from "./auth.service.js";
-import { createAccessToken, createRefreshToken } from "./token.js";
+
+import { createAccessToken } from "./token.js";
+import { refreshTokenSchema } from "./auth.schemas.js";
+import {
+  createRefreshToken,
+  findRefreshToken,
+  revokeRefreshToken,
+  isRefreshTokenValid,
+} from "./refresh-token.js";
+
 export async function register(req: Request, res: Response) {
   const result = registerSchema.safeParse(req.body);
 
@@ -51,11 +62,21 @@ export async function login(req: Request, res: Response) {
     const user = await loginUser(result.data);
 
     const accessToken = createAccessToken(user.id);
-    const refreshToken = createRefreshToken(user.id);
+
+    const refreshToken = await createRefreshToken(user.id);
+
     return res.status(200).json({
       message: "Login successful",
+
       accessToken,
-      refreshToken,
+
+      refreshToken: refreshToken.token,
+
+      expiresIn: {
+        accessToken: "15m",
+        refreshToken: "7d",
+      },
+
       user,
     });
   } catch (error) {
@@ -69,6 +90,55 @@ export async function login(req: Request, res: Response) {
 
     return res.status(500).json({
       message: "Unable to login",
+    });
+  }
+}
+export async function refresh(req: Request, res: Response) {
+  const result = refreshTokenSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({
+      message: "Invalid refresh token data",
+      errors: result.error.flatten(),
+    });
+  }
+
+  try {
+    const { refreshToken } = result.data;
+
+    const storedToken = await findRefreshToken(refreshToken);
+
+    if (!storedToken) {
+      return res.status(401).json({
+        message: "Invalid refresh token",
+      });
+    }
+
+    if (!isRefreshTokenValid(storedToken)) {
+      return res.status(401).json({
+        message: "Refresh token has expired or been revoked",
+      });
+    }
+
+    // Revoke the token that was just used.
+    await revokeRefreshToken(storedToken.id);
+
+    // Create a new refresh token.
+    const newRefreshToken = await createRefreshToken(storedToken.userId);
+
+    // Create a new short-lived access token.
+    const accessToken = createAccessToken(storedToken.userId);
+
+    return res.status(200).json({
+      message: "Token refreshed successfully",
+      accessToken,
+      refreshToken: newRefreshToken.token,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Unable to refresh token",
     });
   }
 }

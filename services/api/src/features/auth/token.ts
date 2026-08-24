@@ -22,16 +22,3 @@ export function createAccessToken(userId: string): string {
     },
   );
 }
-
-export function createRefreshToken(userId: string): string {
-  return jwt.sign(
-    {
-      sub: userId,
-      type: "refresh",
-    },
-    getJwtSecret(),
-    {
-      expiresIn: "7d",
-    },
-  );
-}
