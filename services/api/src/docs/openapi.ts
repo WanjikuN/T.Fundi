@@ -11,6 +11,10 @@ export const openapi = {
       url: "http://localhost:3000",
       description: "Local development",
     },
+    {
+      url: "https://tfundi.vercel.app/",
+      description: "Production",
+    },
   ],
 
   tags: [
@@ -120,12 +124,7 @@ export const openapi = {
     schemas: {
       RegisterRequest: {
         type: "object",
-        required: [
-          "email",
-          "password",
-          "firstName",
-          "lastName",
-        ],
+        required: ["email", "password", "firstName", "lastName"],
         properties: {
           email: {
             type: "string",
@@ -185,11 +184,7 @@ export const openapi = {
           },
           status: {
             type: "string",
-            enum: [
-              "ACTIVE",
-              "SUSPENDED",
-              "DEACTIVATED",
-            ],
+            enum: ["ACTIVE", "SUSPENDED", "DEACTIVATED"],
           },
           platformRole: {
             type: ["string", "null"],
