@@ -10,7 +10,13 @@ import WorkshopPage from "../features/workshop/pages/WorkshopPage";
 import SettingsPage from "../features/identity/pages/SettingsPage";
 import BrandingPage from "../features/tenant/pages/BrandingPage";
 
+import LoginPage from "../features/auth/pages/LoginPage";
+
 const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <LoginPage />,
+  },
   {
     element: <AppLayout />,
     children: [
