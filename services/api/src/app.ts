@@ -16,6 +16,7 @@ app.use(express.json());
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapi));
 
 app.get("/docs/openapi.json", (_req, res) => {
+  res.setHeader("Content-Type", "application/json");
   res.json(openapi);
 });
 
