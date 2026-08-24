@@ -7,9 +7,9 @@
   "scripts": {
     "test": "vitest run",
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "prisma generate && tsc --noEmit",
     "test:watch": "vitest"
   },
   "keywords": [],
