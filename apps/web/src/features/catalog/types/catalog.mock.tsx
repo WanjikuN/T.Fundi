@@ -11,28 +11,83 @@ export const mockProducts: Product[] = [
     price: 85000,
     currency: "KES",
 
-    imageUrl:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc",
+    imageUrl: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc",
 
     images: [
       "https://images.unsplash.com/photo-1555041469-a586c61ea9bc",
-            "https://images.unsplash.com/photo-1555041469-a586c61ea9bc",
-
+      "https://images.unsplash.com/photo-1540574163026-643ea20ade25",
+      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc",
       "https://images.unsplash.com/photo-1540574163026-643ea20ade25",
     ],
 
-    materials: [
+    options: [
       {
-        id: "material-001",
-        name: "Natural Oak",
-        color: "Natural Oak",
-        hexCode: "#C69C6D",
+        id: "option-material",
+        name: "Material",
+        type: "material",
+        values: [
+          {
+            id: "natural-oak",
+            name: "Natural Oak",
+            hexCode: "#C69C6D",
+            images: [
+              "https://images.unsplash.com/photo-1555041469-a586c61ea9bc",
+              "https://images.unsplash.com/photo-1540574163026-643ea20ade25",
+              "https://images.unsplash.com/photo-1555041469-a586c61ea9bc",
+              "https://images.unsplash.com/photo-1540574163026-643ea20ade25",
+            ],
+          },
+          {
+            id: "walnut",
+            name: "Walnut",
+            hexCode: "#5C4033",
+            images: [
+              "https://images.unsplash.com/photo-1555041469-a586c61ea9bc",
+              "https://images.unsplash.com/photo-1540574163026-643ea20ade25",
+              "https://images.unsplash.com/photo-1555041469-a586c61ea9bc",
+              "https://images.unsplash.com/photo-1540574163026-643ea20ade25",
+            ],
+          },
+        ],
       },
+
       {
-        id: "material-002",
-        name: "Walnut",
-        color: "Walnut",
-        hexCode: "#5C4033",
+        id: "option-color",
+        name: "Color",
+        type: "color",
+        values: [
+          {
+            id: "sand",
+            name: "Sand",
+            hexCode: "#D6C5A8",
+          },
+          {
+            id: "charcoal",
+            name: "Charcoal",
+            hexCode: "#333333",
+          },
+          {
+            id: "forest-green",
+            name: "Forest Green",
+            hexCode: "#31543A",
+          },
+        ],
+      },
+
+      {
+        id: "option-finish",
+        name: "Finish",
+        type: "select",
+        values: [
+          {
+            id: "matte",
+            name: "Matte",
+          },
+          {
+            id: "gloss",
+            name: "Gloss",
+          },
+        ],
       },
     ],
 
@@ -58,19 +113,70 @@ export const mockProducts: Product[] = [
     price: 38000,
     currency: "KES",
 
-    imageUrl:
-      "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c",
+    imageUrl: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c",
 
-    images: [
-      "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c",
-    ],
+    images: ["https://images.unsplash.com/photo-1567538096630-e0c55bd6374c"],
 
-    materials: [
+    options: [
       {
-        id: "material-003",
-        name: "Teak",
-        color: "Teak",
-        hexCode: "#B8865B",
+        id: "option-material",
+        name: "Wood",
+        type: "material",
+        values: [
+          {
+            id: "teak",
+            name: "Teak",
+            hexCode: "#B8865B",
+          },
+          {
+            id: "mahogany",
+            name: "Mahogany",
+            hexCode: "#6E3B24",
+          },
+        ],
+      },
+
+      {
+        id: "option-upholstery",
+        name: "Upholstery",
+        type: "select",
+        values: [
+          {
+            id: "linen",
+            name: "Linen",
+          },
+          {
+            id: "velvet",
+            name: "Velvet",
+          },
+          {
+            id: "leather",
+            name: "Leather",
+          },
+        ],
+      },
+
+      {
+        id: "option-color",
+        name: "Color",
+        type: "color",
+        values: [
+          {
+            id: "cream",
+            name: "Cream",
+            hexCode: "#E8DDC8",
+          },
+          {
+            id: "charcoal",
+            name: "Charcoal",
+            hexCode: "#333333",
+          },
+          {
+            id: "terracotta",
+            name: "Terracotta",
+            hexCode: "#B85C38",
+          },
+        ],
       },
     ],
 
@@ -96,19 +202,52 @@ export const mockProducts: Product[] = [
     price: 72000,
     currency: "KES",
 
-    imageUrl:
-      "https://images.unsplash.com/photo-1615529162924-f8605388461d",
+    imageUrl: "https://images.unsplash.com/photo-1615529162924-f8605388461d",
 
-    images: [
-      "https://images.unsplash.com/photo-1615529162924-f8605388461d",
-    ],
+    images: ["https://images.unsplash.com/photo-1615529162924-f8605388461d"],
 
-    materials: [
+    options: [
       {
-        id: "material-004",
-        name: "Mahogany",
-        color: "Mahogany",
-        hexCode: "#6E3B24",
+        id: "option-wood",
+        name: "Wood",
+        type: "material",
+        values: [
+          {
+            id: "mahogany",
+            name: "Mahogany",
+            hexCode: "#6E3B24",
+          },
+          {
+            id: "walnut",
+            name: "Walnut",
+            hexCode: "#5C4033",
+          },
+          {
+            id: "oak",
+            name: "Oak",
+            hexCode: "#C69C6D",
+          },
+        ],
+      },
+
+      {
+        id: "option-finish",
+        name: "Finish",
+        type: "select",
+        values: [
+          {
+            id: "natural",
+            name: "Natural",
+          },
+          {
+            id: "matte",
+            name: "Matte",
+          },
+          {
+            id: "gloss",
+            name: "Gloss",
+          },
+        ],
       },
     ],
 
@@ -133,19 +272,43 @@ export const mockProducts: Product[] = [
     price: 95000,
     currency: "KES",
 
-    imageUrl:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85",
+    imageUrl: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85",
 
-    images: [
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85",
-    ],
+    images: ["https://images.unsplash.com/photo-1505693416388-ac5ce068fe85"],
 
-    materials: [
+    options: [
       {
-        id: "material-005",
-        name: "Natural Timber",
-        color: "Natural Timber",
-        hexCode: "#C19A6B",
+        id: "option-material",
+        name: "Material",
+        type: "material",
+        values: [
+          {
+            id: "natural-timber",
+            name: "Natural Timber",
+            hexCode: "#C19A6B",
+          },
+          {
+            id: "walnut",
+            name: "Walnut",
+            hexCode: "#5C4033",
+          },
+        ],
+      },
+
+      {
+        id: "option-finish",
+        name: "Finish",
+        type: "select",
+        values: [
+          {
+            id: "natural",
+            name: "Natural",
+          },
+          {
+            id: "matte",
+            name: "Matte",
+          },
+        ],
       },
     ],
 
@@ -171,19 +334,43 @@ export const mockProducts: Product[] = [
     price: 64000,
     currency: "KES",
 
-    imageUrl:
-      "https://images.unsplash.com/photo-1558997519-83ea9252edf8",
+    imageUrl: "https://images.unsplash.com/photo-1558997519-83ea9252edf8",
 
-    images: [
-      "https://images.unsplash.com/photo-1558997519-83ea9252edf8",
-    ],
+    images: ["https://images.unsplash.com/photo-1558997519-83ea9252edf8"],
 
-    materials: [
+    options: [
       {
-        id: "material-006",
-        name: "Dark Walnut",
-        color: "Dark Walnut",
-        hexCode: "#3E2723",
+        id: "option-material",
+        name: "Wood",
+        type: "material",
+        values: [
+          {
+            id: "dark-walnut",
+            name: "Dark Walnut",
+            hexCode: "#3E2723",
+          },
+          {
+            id: "oak",
+            name: "Oak",
+            hexCode: "#C69C6D",
+          },
+        ],
+      },
+
+      {
+        id: "option-hardware",
+        name: "Hardware",
+        type: "select",
+        values: [
+          {
+            id: "brass",
+            name: "Brass",
+          },
+          {
+            id: "black",
+            name: "Black",
+          },
+        ],
       },
     ],
 
@@ -208,19 +395,43 @@ export const mockProducts: Product[] = [
     price: 24000,
     currency: "KES",
 
-    imageUrl:
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0",
+    imageUrl: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0",
 
-    images: [
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0",
-    ],
+    images: ["https://images.unsplash.com/photo-1600210492486-724fe5c67fb0"],
 
-    materials: [
+    options: [
       {
-        id: "material-007",
-        name: "Teak",
-        color: "Teak",
-        hexCode: "#B8865B",
+        id: "option-material",
+        name: "Material",
+        type: "material",
+        values: [
+          {
+            id: "teak",
+            name: "Teak",
+            hexCode: "#B8865B",
+          },
+          {
+            id: "natural-timber",
+            name: "Natural Timber",
+            hexCode: "#C19A6B",
+          },
+        ],
+      },
+
+      {
+        id: "option-finish",
+        name: "Finish",
+        type: "select",
+        values: [
+          {
+            id: "natural",
+            name: "Natural",
+          },
+          {
+            id: "weathered",
+            name: "Weathered",
+          },
+        ],
       },
     ],
 

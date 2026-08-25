@@ -1,4 +1,8 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import {
+  Component,
+  type ErrorInfo,
+  type ReactNode,
+} from "react";
 
 type Props = {
   children: ReactNode;
@@ -9,7 +13,10 @@ type State = {
   hasError: boolean;
 };
 
-class Product3DErrorBoundary extends Component<Props, State> {
+class Product3DErrorBoundary extends Component<
+  Props,
+  State
+> {
   state: State = {
     hasError: false,
   };
@@ -20,8 +27,15 @@ class Product3DErrorBoundary extends Component<Props, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Product 3D viewer failed:", error, errorInfo);
+  componentDidCatch(
+    error: Error,
+    errorInfo: ErrorInfo,
+  ) {
+    console.error(
+      "T.Fundi 3D viewer error:",
+      error,
+      errorInfo,
+    );
   }
 
   render() {

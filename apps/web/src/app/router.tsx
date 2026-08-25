@@ -11,51 +11,145 @@ import SettingsPage from "../features/identity/pages/SettingsPage";
 import BrandingPage from "../features/tenant/pages/BrandingPage";
 
 import LoginPage from "../features/auth/pages/LoginPage";
+
 import CatalogPage from "../features/catalog/pages/CatalogPage";
 import ProductDetailsPage from "../features/catalog/pages/ProductDetailsPage";
+import CreateProductPage from "../features/catalog/pages/CreateProductPage";
+import ProductReviewPage from "../features/catalog/pages/ProductReviewPage";
 
 const router = createBrowserRouter([
+  /*
+   * =========================================================
+   * PUBLIC ROUTES
+   * =========================================================
+   */
+
   {
     path: "/login",
     element: <LoginPage />,
   },
+
+  /*
+   * =========================================================
+   * PROTECTED APPLICATION
+   * =========================================================
+   */
+
   {
     element: (
       <ProtectedRoute>
         <AppLayout />
       </ProtectedRoute>
     ),
+
     children: [
+      /*
+       * =======================================================
+       * DASHBOARD
+       * =======================================================
+       */
+
       {
-        path: "/",
+        index: true,
         element: <DashboardPage />,
       },
+
+      /*
+       * =======================================================
+       * CATALOG
+       * =======================================================
+       */
+
       {
-        path: "/catalog",
+        path: "catalog",
         element: <CatalogPage />,
       },
+
+      /*
+       * =======================================================
+       * CREATE PRODUCT
+       *
+       * /catalog/products/new
+       * =======================================================
+       */
+
       {
-        path: "/catalog/:slug",
+        path: "catalog/products/new",
+        element: <CreateProductPage />,
+      },
+
+      /*
+       * =======================================================
+       * PRODUCT REVIEW
+       *
+       * /catalog/products/new/review
+       * =======================================================
+       */
+
+      {
+        path: "catalog/products/new/review",
+        element: <ProductReviewPage />,
+      },
+
+      /*
+       * =======================================================
+       * PRODUCT DETAILS
+       *
+       * /catalog/:slug
+       * =======================================================
+       */
+
+      {
+        path: "catalog/:slug",
         element: <ProductDetailsPage />,
       },
+
+      /*
+       * =======================================================
+       * AI STUDIO
+       * =======================================================
+       */
+
       {
-        path: "/ai-studio",
+        path: "ai-studio",
         element: <AIStudioPage />,
       },
+
+      /*
+       * =======================================================
+       * COMMERCE
+       * =======================================================
+       */
+
       {
-        path: "/orders",
+        path: "orders",
         element: <OrdersPage />,
       },
+
+      /*
+       * =======================================================
+       * WORKSHOP
+       * =======================================================
+       */
+
       {
-        path: "/workshop",
+        path: "workshop",
         element: <WorkshopPage />,
       },
+
+      /*
+       * =======================================================
+       * SETTINGS
+       * =======================================================
+       */
+
       {
-        path: "/settings",
+        path: "settings",
         element: <SettingsPage />,
       },
+
       {
-        path: "/settings/branding",
+        path: "settings/branding",
         element: <BrandingPage />,
       },
     ],

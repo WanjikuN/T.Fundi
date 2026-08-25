@@ -12,14 +12,19 @@ import {
 type Product360ViewerProps = {
   images: string[];
   productName: string;
+  materialName?: string;
 };
 
 const Product360Viewer = ({
   images,
   productName,
+  materialName,
 }: Product360ViewerProps) => {
-  const [currentFrame, setCurrentFrame] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  const [currentFrame, setCurrentFrame] =
+    useState(0);
+
+  const [isDragging, setIsDragging] =
+    useState(false);
 
   const frameRef = useRef(0);
 
@@ -29,15 +34,12 @@ const Product360Viewer = ({
   const accumulatedDistance = useRef(0);
   const velocity = useRef(0);
 
-  const animationFrame = useRef<number | null>(null);
+  const animationFrame = useRef<number | null>(
+    null,
+  );
 
   const frameCount = images.length;
 
-  /**
-   * Keep frame indexes circular.
-   *
-   * 0 → 1 → 2 → ... → last → 0
-   */
   const normalizeFrame = (frame: number) => {
     if (frameCount === 0) {
       return 0;
@@ -49,29 +51,24 @@ const Product360Viewer = ({
     );
   };
 
-  /**
-   * Update the visible frame.
-   */
   const updateFrame = (frame: number) => {
     const normalized = normalizeFrame(frame);
 
     frameRef.current = normalized;
+
     setCurrentFrame(normalized);
   };
 
-  /**
-   * Stop momentum animation.
-   */
   const stopMomentum = () => {
     if (animationFrame.current !== null) {
-      cancelAnimationFrame(animationFrame.current);
+      cancelAnimationFrame(
+        animationFrame.current,
+      );
+
       animationFrame.current = null;
     }
   };
 
-  /**
-   * Smooth momentum after releasing the mouse/finger.
-   */
   const startMomentum = () => {
     stopMomentum();
 
@@ -84,14 +81,11 @@ const Product360Viewer = ({
         return;
       }
 
-      /**
-       * Fractional frame movement gives the
-       * rotation a much smoother feel.
-       */
-      const nextFrame =
-        frameRef.current + velocity.current;
-
-      updateFrame(Math.round(nextFrame));
+      updateFrame(
+        Math.round(
+          frameRef.current + velocity.current,
+        ),
+      );
 
       animationFrame.current =
         requestAnimationFrame(animate);
@@ -136,10 +130,7 @@ const Product360Viewer = ({
     lastX.current = event.clientX;
 
     /**
-     * Lower = more sensitive.
-     *
-     * 18px gives a much smoother turn than
-     * jumping every 35px.
+     * Lower number = more sensitive.
      */
     const pixelsPerFrame = 18;
 
@@ -149,29 +140,17 @@ const Product360Viewer = ({
       accumulatedDistance.current /
       pixelsPerFrame;
 
-    /**
-     * Only apply whole frames visually,
-     * but preserve the fractional remainder.
-     */
     if (Math.abs(frameMovement) >= 1) {
-      const frames =
-        Math.trunc(frameMovement);
+      const frames = Math.trunc(frameMovement);
 
       accumulatedDistance.current -=
         frames * pixelsPerFrame;
 
-      /**
-       * Dragging right rotates the furniture
-       * naturally in the opposite direction.
-       */
       updateFrame(
         frameRef.current - frames,
       );
     }
 
-    /**
-     * Store movement velocity for momentum.
-     */
     velocity.current =
       -(movement / pixelsPerFrame) * 0.55;
   };
@@ -206,21 +185,21 @@ const Product360Viewer = ({
   };
 
   /**
-   * Preload all images.
-   *
-   * This is extremely important for smooth
-   * 360° interaction.
+   * Reset to the first frame whenever the
+   * selected material/image set changes.
    */
   useEffect(() => {
-    const preloadedImages: HTMLImageElement[] =
-      [];
+    stopMomentum();
 
-    images.forEach((image) => {
-      const img = new Image();
+    velocity.current = 0;
+    accumulatedDistance.current = 0;
 
-      img.src = image;
+    frameRef.current = 0;
+    setCurrentFrame(0);
 
-      preloadedImages.push(img);
+    images.forEach((src) => {
+      const image = new Image();
+      image.src = src;
     });
 
     return () => {
@@ -232,7 +211,7 @@ const Product360Viewer = ({
     return null;
   }
 
-  if (images.length === 1) {
+  if (images.length < 3) {
     return (
       <div className="relative overflow-hidden rounded-3xl bg-black/[0.04]">
         <img
@@ -242,7 +221,7 @@ const Product360Viewer = ({
         />
 
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/90 px-4 py-2 text-xs font-medium text-gray-500 shadow-sm backdrop-blur">
-          More views needed for 360° view
+          More product views needed for 360°
         </div>
       </div>
     );
@@ -264,20 +243,29 @@ const Product360Viewer = ({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
       >
-        {/* 360 badge */}
         <div className="absolute left-5 top-5 z-10">
           <div className="flex items-center gap-2 rounded-full border border-black/5 bg-white/90 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-gray-600 shadow-sm backdrop-blur">
             <Rotate3D size={15} />
-            360° View
+
+            <span>360° View</span>
+
+            {materialName && (
+              <>
+                <span className="h-3 w-px bg-black/10" />
+
+                <span className="normal-case tracking-normal">
+                  {materialName}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Reset */}
         <button
           type="button"
-          onPointerDown={(event) => {
-            event.stopPropagation();
-          }}
+          onPointerDown={(event) =>
+            event.stopPropagation()
+          }
           onClick={(event) => {
             event.stopPropagation();
             resetView();
@@ -288,30 +276,22 @@ const Product360Viewer = ({
           Reset
         </button>
 
-        {/* Product */}
         <img
           src={images[currentFrame]}
-          alt={`${productName} 360° view`}
+          alt={`${productName} ${materialName ?? ""} 360° view`}
           draggable={false}
-          className={`aspect-[4/3] w-full select-none object-contain ${
-            isDragging
-              ? ""
-              : "transition-opacity duration-100"
-          }`}
+          className="aspect-[4/3] w-full select-none object-contain"
         />
 
-        {/* Interaction hint */}
         <div className="pointer-events-none absolute bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-black/5 bg-white/90 px-4 py-2 text-xs text-gray-500 shadow-sm backdrop-blur">
           Drag to rotate
         </div>
 
-        {/* Frame counter */}
         <div className="absolute bottom-5 right-5 rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-medium text-white backdrop-blur">
           {currentFrame + 1} / {frameCount}
         </div>
       </div>
 
-      {/* Rotation progress */}
       <div className="mt-4 h-1 overflow-hidden rounded-full bg-black/[0.06]">
         <div
           className="h-full rounded-full transition-[width] duration-100"

@@ -1,12 +1,13 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Ruler,
+  ShoppingCart,
   Sparkles,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import MaterialSelector from "../components/MaterialSelector";
+import ProductOptionsSelector from "../components/ProductOptionsSelector";
 import ProductViewer from "../components/ProductViewer";
 import { mockProducts } from "../types/catalog.mock";
 
@@ -19,13 +20,28 @@ const ProductDetailsPage = () => {
     [slug],
   );
 
-  const [selectedMaterialId, setSelectedMaterialId] = useState(
-    product?.materials[0]?.id ?? "",
-  );
+  const [selectedOptions, setSelectedOptions] =
+    useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!product) {
+      setSelectedOptions({});
+      return;
+    }
+
+    setSelectedOptions(
+      Object.fromEntries(
+        product.options.map((option) => [
+          option.id,
+          option.values[0]?.id ?? "",
+        ]),
+      ),
+    );
+  }, [product]);
 
   if (!product) {
     return (
-      <main className="min-h-screen bg-[var(--color-background)] px-4 py-10 sm:px-6 lg:px-8">
+      <main className="min-h-[calc(100vh-4rem)] bg-[var(--color-background)] px-4 py-6">
         <div className="mx-auto max-w-4xl">
           <Link
             to="/catalog"
@@ -35,26 +51,57 @@ const ProductDetailsPage = () => {
             Back to catalog
           </Link>
 
-          <div className="mt-16 text-center">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Product not found
-            </h1>
+          <div className="flex min-h-[60vh] items-center justify-center text-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Product not found
+              </h1>
 
-            <p className="mt-2 text-gray-500">
-              The furniture piece you're looking for doesn't exist.
-            </p>
+              <p className="mt-2 text-gray-500">
+                The furniture piece you're looking for doesn't exist.
+              </p>
+            </div>
           </div>
         </div>
       </main>
     );
   }
 
-  const images = product.images?.length
-    ? product.images
-    : [product.imageUrl];
+  const handleOptionChange = (
+    optionId: string,
+    valueId: string,
+  ) => {
+    setSelectedOptions((current) => ({
+      ...current,
+      [optionId]: valueId,
+    }));
+  };
 
-  const selectedMaterial = product.materials.find(
-    (material) => material.id === selectedMaterialId,
+  const selectedValues = product.options
+    .map((option) =>
+      option.values.find(
+        (value) =>
+          value.id === selectedOptions[option.id],
+      ),
+    )
+    .filter(Boolean);
+
+  const visualValue = selectedValues.find(
+    (value) => value?.images?.length,
+  );
+
+  const viewerImages = visualValue?.images?.length
+    ? visualValue.images
+    : product.images?.length
+      ? product.images
+      : [product.imageUrl];
+
+  const model3DUrl =
+    visualValue?.model3DUrl ??
+    product.model3DUrl;
+
+  const selectedColor = selectedValues.find(
+    (value) => value?.hexCode,
   );
 
   const handleCustomize = () => {
@@ -63,178 +110,217 @@ const ProductDetailsPage = () => {
         productId: product.id,
         productSlug: product.slug,
         productName: product.name,
-        materialId: selectedMaterial?.id,
-        materialName: selectedMaterial?.name,
+        selectedOptions,
       },
     });
   };
 
   return (
-    <main className="min-h-screen bg-[var(--color-background)] px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <Link
-          to="/catalog"
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition hover:text-[var(--color-primary)]"
-        >
-          <ArrowLeft size={17} />
-          Back to catalog
-        </Link>
+    <main className="min-h-[calc(100vh-4rem)] bg-[var(--color-background)]">
+      <div className="mx-auto max-w-[1500px] px-4 py-4 sm:px-6 sm:py-5 lg:h-[calc(100vh-4rem)] lg:px-8 lg:py-4">
+        {/* HEADER */}
 
-        <div className="mt-8 grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16">
-          {/* Product visual */}
-          <div>
-            <ProductViewer
-              images={images}
-              productName={product.name}
-              modelUrl={product.model3DUrl}
-              materialColor={selectedMaterial?.hexCode}
-            />
+        <div className="shrink-0">
+          <Link
+            to="/catalog"
+            className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition hover:text-[var(--color-primary)]"
+          >
+            <ArrowLeft size={17} />
+            Back to catalog
+          </Link>
+        </div>
 
-            <div className="mt-4 flex items-start gap-3 rounded-2xl border border-black/5 bg-white/60 p-4">
-              <div
-                className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-                style={{
-                  backgroundColor:
-                    "color-mix(in srgb, var(--color-primary) 10%, transparent)",
-                }}
-              >
-                <Sparkles
-                  size={17}
+        {/* PRODUCT WORKSPACE */}
+
+        <div className="mt-3 lg:mt-4 lg:grid lg:h-[calc(100%-2rem)] lg:grid-cols-[minmax(0,1.25fr)_minmax(360px,0.75fr)] lg:gap-10 xl:grid-cols-[minmax(0,1.3fr)_minmax(400px,0.7fr)] xl:gap-14">
+          {/* VIEWER */}
+
+          <section className="min-h-0">
+            <div
+              className="
+                relative
+                h-[58vh]
+                min-h-[380px]
+                overflow-hidden
+                rounded-[2rem]
+                bg-white
+                shadow-sm
+                ring-1
+                ring-black/[0.06]
+
+                sm:h-[62vh]
+                sm:min-h-[440px]
+
+                lg:h-full
+                lg:min-h-0
+              "
+            >
+              {/* Stage background */}
+
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,1)_0%,rgba(0,0,0,0.025)_100%)]" />
+
+              {/* Viewer */}
+
+              <div className="relative z-10 h-full w-full">
+                <ProductViewer
+                  images={viewerImages}
+                  productName={product.name}
+                  modelUrl={model3DUrl}
+                  materialColor={selectedColor?.hexCode}
+                  materialName={visualValue?.name}
+                />
+              </div>
+            </div>
+
+            {/* Mobile hint */}
+
+            <div className="mt-3 flex items-center justify-center gap-2 text-xs text-gray-400 lg:hidden">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
+              Drag to rotate · Pinch to zoom
+            </div>
+          </section>
+
+          {/* DETAILS */}
+
+          <section className="mt-8 min-h-0 lg:mt-0">
+            <div className="lg:h-full lg:overflow-y-auto lg:pr-3">
+              <div className="pb-8 lg:pb-6">
+                {/* CATEGORY */}
+
+                <p
+                  className="text-xs font-semibold uppercase tracking-[0.22em] sm:text-sm"
                   style={{
                     color: "var(--color-primary)",
                   }}
-                />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold text-gray-900">
-                  Make it yours
+                >
+                  {product.category}
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-gray-500">
-                  Explore the piece, choose your finish, then visualize
-                  it in your own space with AI.
+                {/* NAME */}
+
+                <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl xl:text-5xl">
+                  {product.name}
+                </h1>
+
+                {/* DESCRIPTION */}
+
+                <p className="mt-4 max-w-xl text-sm leading-6 text-gray-600 sm:text-base sm:leading-7">
+                  {product.description}
                 </p>
-              </div>
-            </div>
-          </div>
 
-          {/* Product information */}
-          <div className="flex flex-col justify-center">
-            <p
-              className="text-sm font-semibold uppercase tracking-[0.2em]"
-              style={{
-                color: "var(--color-primary)",
-              }}
-            >
-              {product.category}
-            </p>
+                {/* PRICE */}
 
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-              {product.name}
-            </h1>
+                <div className="mt-5 text-2xl font-bold text-gray-900">
+                  {product.currency}{" "}
+                  {product.price.toLocaleString("en-KE")}
+                </div>
 
-            <p className="mt-5 text-base leading-7 text-gray-600">
-              {product.description}
-            </p>
+                {/* OPTIONS */}
 
-            <div className="mt-6 text-2xl font-bold text-gray-900">
-              {product.currency}{" "}
-              {product.price.toLocaleString("en-KE")}
-            </div>
-
-            {/* Materials */}
-            <div className="mt-8 border-t border-black/10 pt-7">
-              <MaterialSelector
-                materials={product.materials}
-                selectedMaterialId={selectedMaterialId}
-                onChange={setSelectedMaterialId}
-              />
-            </div>
-
-            {/* Dimensions */}
-            {product.dimensions && (
-              <div className="mt-7 border-t border-black/10 pt-7">
-                <div className="flex items-center gap-2">
-                  <Ruler
-                    size={17}
-                    style={{
-                      color: "var(--color-primary)",
-                    }}
+                <div className="mt-7 border-t border-black/10 pt-6">
+                  <ProductOptionsSelector
+                    options={product.options}
+                    selectedOptions={selectedOptions}
+                    onChange={handleOptionChange}
                   />
-
-                  <h2 className="text-sm font-semibold text-gray-900">
-                    Dimensions
-                  </h2>
                 </div>
 
-                <div className="mt-3 grid grid-cols-3 gap-3">
-                  <div className="rounded-xl bg-black/[0.03] p-3">
-                    <p className="text-xs text-gray-500">
-                      Width
-                    </p>
+                {/* DIMENSIONS */}
 
-                    <p className="mt-1 font-semibold text-gray-900">
-                      {product.dimensions.width}
-                      {product.dimensions.unit}
-                    </p>
+                {product.dimensions && (
+                  <div className="mt-7 border-t border-black/10 pt-6">
+                    <div className="flex items-center gap-2">
+                      <Ruler
+                        size={17}
+                        style={{
+                          color:
+                            "var(--color-primary)",
+                        }}
+                      />
+
+                      <h2 className="text-sm font-semibold text-gray-900">
+                        Dimensions
+                      </h2>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+                      <Dimension
+                        label="Width"
+                        value={`${product.dimensions.width}${product.dimensions.unit}`}
+                      />
+
+                      <Dimension
+                        label="Depth"
+                        value={`${product.dimensions.depth}${product.dimensions.unit}`}
+                      />
+
+                      <Dimension
+                        label="Height"
+                        value={`${product.dimensions.height}${product.dimensions.unit}`}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* DESKTOP ACTIONS */}
+
+                <div className="sticky bottom-0 z-30 mt-7 border-t border-black/10 bg-[var(--color-background)]/95 pt-5 pb-3 backdrop-blur-md">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={handleCustomize}
+                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-[var(--color-primary-foreground)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                      style={{
+                        backgroundColor:
+                          "var(--color-primary)",
+                      }}
+                    >
+                      <Sparkles size={18} />
+                      Customize with AI
+                    </button>
+
+                    <button
+                      type="button"
+                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-black/10 bg-white px-5 text-sm font-semibold text-gray-900 shadow-sm transition hover:-translate-y-0.5 hover:bg-black/[0.02] hover:shadow-md"
+                    >
+                      <ShoppingCart size={18} />
+                      Add to Cart
+                    </button>
                   </div>
 
-                  <div className="rounded-xl bg-black/[0.03] p-3">
-                    <p className="text-xs text-gray-500">
-                      Depth
-                    </p>
-
-                    <p className="mt-1 font-semibold text-gray-900">
-                      {product.dimensions.depth}
-                      {product.dimensions.unit}
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl bg-black/[0.03] p-3">
-                    <p className="text-xs text-gray-500">
-                      Height
-                    </p>
-
-                    <p className="mt-1 font-semibold text-gray-900">
-                      {product.dimensions.height}
-                      {product.dimensions.unit}
-                    </p>
-                  </div>
+                  <p className="mt-2 text-center text-xs text-gray-400">
+                    Explore the piece, choose your finish,
+                    then customize it with AI.
+                  </p>
                 </div>
               </div>
-            )}
-
-            {/* Actions */}
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={handleCustomize}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold text-[var(--color-primary-foreground)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                style={{
-                  backgroundColor: "var(--color-primary)",
-                }}
-              >
-                <Sparkles size={18} />
-                Customize with AI
-              </button>
-
-              <button
-                type="button"
-                className="rounded-xl border border-black/10 bg-white px-5 py-3.5 text-sm font-semibold text-gray-900 transition hover:bg-black/[0.03]"
-              >
-                Add to Cart
-              </button>
             </div>
-
-            <p className="mt-4 text-center text-xs text-gray-400">
-              Customize the material, explore your options, and
-              visualize this piece in your space.
-            </p>
-          </div>
+          </section>
         </div>
       </div>
     </main>
+  );
+};
+
+type DimensionProps = {
+  label: string;
+  value: string;
+};
+
+const Dimension = ({
+  label,
+  value,
+}: DimensionProps) => {
+  return (
+    <div className="rounded-xl bg-black/[0.03] p-3">
+      <p className="text-xs text-gray-500">
+        {label}
+      </p>
+
+      <p className="mt-1 text-sm font-semibold text-gray-900">
+        {value}
+      </p>
+    </div>
   );
 };
 

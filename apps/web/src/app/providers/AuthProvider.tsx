@@ -19,6 +19,14 @@ import type {
   User,
 } from "../../features/auth/types";
 
+const AUTH_STORAGE_KEY = "tfundi_auth";
+
+type StoredAuth = {
+  user: User;
+  accessToken: string;
+  refreshToken: string | null;
+};
+
 interface AuthContextValue {
   user: User | null;
   accessToken: string | null;
@@ -34,19 +42,55 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const [isInitializing, setIsInitializing] = useState(true);
+
   const [user, setUser] = useState<User | null>(null);
+
   const [accessToken, setAccessToken] = useState<string | null>(null);
+
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
+
+  /*
+   * Restore the temporary development session.
+   *
+   * Later this will be replaced with a real
+   * backend session / refresh-token check.
+   */
   useEffect(() => {
-    // We'll replace this with the real session/refresh check next.
-    setIsInitializing(false);
+    try {
+      const stored = sessionStorage.getItem(AUTH_STORAGE_KEY);
+
+      if (stored) {
+        const parsed: StoredAuth = JSON.parse(stored);
+
+        if (parsed.user && parsed.accessToken) {
+          setUser(parsed.user);
+          setAccessToken(parsed.accessToken);
+          setRefreshToken(parsed.refreshToken ?? null);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to restore T.Fundi auth session:", error);
+
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    } finally {
+      setIsInitializing(false);
+    }
   }, []);
+
   async function login(input: LoginInput) {
     const response = await loginRequest(input);
 
     setUser(response.user);
     setAccessToken(response.accessToken);
     setRefreshToken(response.refreshToken);
+
+    const storedAuth: StoredAuth = {
+      user: response.user,
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+    };
+
+    sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(storedAuth));
 
     return response;
   }
@@ -58,6 +102,14 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(response.accessToken);
     setRefreshToken(response.refreshToken);
 
+    const storedAuth: StoredAuth = {
+      user: response.user,
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+    };
+
+    sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(storedAuth));
+
     return response;
   }
 
@@ -65,6 +117,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setAccessToken(null);
     setRefreshToken(null);
+
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
   }
 
   const value = useMemo(
