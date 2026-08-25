@@ -3,6 +3,7 @@ import {
   useContext,
   useMemo,
   useState,
+  useEffect,
   type ReactNode,
 } from "react";
 
@@ -23,28 +24,23 @@ interface AuthContextValue {
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;
   login: (input: LoginInput) => Promise<AuthResponse>;
   register: (input: RegisterInput) => Promise<AuthResponse>;
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(
-  undefined,
-);
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export default function AuthProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function AuthProvider({ children }: { children: ReactNode }) {
+  const [isInitializing, setIsInitializing] = useState(true);
   const [user, setUser] = useState<User | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(
-    null,
-  );
-  const [refreshToken, setRefreshToken] = useState<string | null>(
-    null,
-  );
-
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
+  useEffect(() => {
+    // We'll replace this with the real session/refresh check next.
+    setIsInitializing(false);
+  }, []);
   async function login(input: LoginInput) {
     const response = await loginRequest(input);
 
@@ -77,27 +73,23 @@ export default function AuthProvider({
       accessToken,
       refreshToken,
       isAuthenticated: Boolean(accessToken && user),
+      isInitializing,
+
       login,
       register,
       logout,
     }),
-    [user, accessToken, refreshToken],
+    [user, accessToken, refreshToken, isInitializing],
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error(
-      "useAuth must be used within an AuthProvider",
-    );
+    throw new Error("useAuth must be used within an AuthProvider");
   }
 
   return context;

@@ -34,3 +34,708 @@ body {
     "Segoe UI",
     sans-serif;
 }
+@import "tailwindcss";
+
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  --color-primary: #8b5e3c;
+  --color-primary-foreground: #ffffff;
+
+  /*
+   * Everything below is derived from the tenant primary color.
+   * No fixed furniture colors are used.
+   */
+
+  --loader-main: var(--color-primary);
+
+  --loader-light: color-mix(
+    in srgb,
+    var(--color-primary) 70%,
+    white
+  );
+
+  --loader-lighter: color-mix(
+    in srgb,
+    var(--color-primary) 35%,
+    white
+  );
+
+  --loader-dark: color-mix(
+    in srgb,
+    var(--color-primary) 70%,
+    black
+  );
+
+  --loader-deep: color-mix(
+    in srgb,
+    var(--color-primary) 50%,
+    black
+  );
+
+  --loader-bg: color-mix(
+    in srgb,
+    var(--color-primary) 4%,
+    white
+  );
+
+  color: var(--loader-dark);
+  background: var(--loader-bg);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+}
+
+/* =========================================================
+   LOADING SCREEN
+   ========================================================= */
+
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      var(--loader-lighter),
+      transparent 34%
+    ),
+    var(--loader-bg);
+
+  color: var(--loader-dark);
+}
+
+/* =========================================================
+   3D FURNITURE AREA
+   ========================================================= */
+
+.furniture-loader {
+  position: relative;
+
+  width: 300px;
+  height: 300px;
+
+  perspective: 900px;
+  perspective-origin: 50% 45%;
+}
+
+.furniture-object {
+  position: absolute;
+
+  width: 190px;
+  height: 210px;
+
+  left: 50%;
+  top: 42%;
+
+  transform:
+    translate(-50%, -50%)
+    rotateX(-8deg)
+    rotateY(-22deg);
+
+  transform-style: preserve-3d;
+
+  animation: furnitureFloat 4s ease-in-out infinite;
+}
+
+/* =========================================================
+   COMMON 3D PART
+   ========================================================= */
+
+.furniture-part {
+  position: absolute;
+
+  transform-style: preserve-3d;
+
+  background: var(--loader-main);
+
+  border-radius: 3px;
+
+  box-shadow:
+    0 10px 18px
+      color-mix(
+        in srgb,
+        var(--color-primary) 18%,
+        transparent
+      ),
+    inset 1px 1px 0
+      color-mix(
+        in srgb,
+        var(--color-primary) 35%,
+        white
+      );
+}
+
+/* =========================================================
+   SEAT
+   ========================================================= */
+
+.seat {
+  width: 150px;
+  height: 24px;
+
+  left: 20px;
+  top: 105px;
+
+  transform:
+    translateZ(22px)
+    rotateX(2deg);
+
+  animation: assembleSeat 3.6s ease-in-out infinite;
+}
+
+/* top face */
+
+.seat .top {
+  position: absolute;
+
+  width: 150px;
+  height: 24px;
+
+  top: -12px;
+
+  transform-origin: bottom;
+
+  transform: rotateX(90deg);
+
+  background: var(--loader-light);
+
+  border-radius: 3px 3px 0 0;
+}
+
+/* front face */
+
+.seat .front {
+  position: absolute;
+
+  inset: 0;
+
+  background: var(--loader-main);
+}
+
+/* side face */
+
+.seat .side {
+  position: absolute;
+
+  right: -10px;
+  top: 0;
+
+  width: 10px;
+  height: 24px;
+
+  transform-origin: left;
+
+  transform: rotateY(90deg);
+
+  background: var(--loader-dark);
+}
+
+/* =========================================================
+   BACKREST
+   ========================================================= */
+
+.backrest {
+  width: 150px;
+  height: 22px;
+
+  left: 20px;
+  top: 34px;
+
+  transform:
+    translateZ(-12px)
+    rotateX(2deg);
+
+  animation: assembleBackrest 3.6s ease-in-out infinite;
+}
+
+.backrest .top {
+  position: absolute;
+
+  width: 150px;
+  height: 22px;
+
+  top: -9px;
+
+  transform-origin: bottom;
+
+  transform: rotateX(90deg);
+
+  background: var(--loader-light);
+}
+.loading-brand{
+    position: absolute;
+
+  left: 40px;
+  top: 60px;
+}
+.backrest .front {
+  position: absolute;
+  inset: 0;
+
+  background: var(--loader-main);
+}
+
+.backrest .side {
+  position: absolute;
+
+  right: -9px;
+  top: 0;
+
+  width: 9px;
+  height: 22px;
+
+  transform-origin: left;
+
+  transform: rotateY(90deg);
+
+  background: var(--loader-dark);
+}
+
+/* =========================================================
+   LEGS
+   ========================================================= */
+
+.leg {
+  width: 17px;
+  height: 95px;
+
+  top: 126px;
+
+  transform-origin: top center;
+}
+
+/* Front left */
+
+.leg-1 {
+  left: 26px;
+
+  transform:
+    translateZ(25px)
+    rotateY(-5deg);
+
+  animation: assembleLeg1 3.6s ease-in-out infinite;
+}
+
+/* Front right */
+
+.leg-2 {
+  right: 25px;
+
+  transform:
+    translateZ(25px)
+    rotateY(5deg);
+
+  animation: assembleLeg2 3.6s ease-in-out infinite;
+}
+
+/* Back left */
+
+.leg-3 {
+  left: 30px;
+
+  transform:
+    translateZ(-18px)
+    rotateY(-5deg);
+
+  animation: assembleLeg3 3.6s ease-in-out infinite;
+}
+
+/* Back right */
+
+.leg-4 {
+  right: 29px;
+
+  transform:
+    translateZ(-18px)
+    rotateY(5deg);
+
+  animation: assembleLeg4 3.6s ease-in-out infinite;
+}
+
+.leg .front {
+  position: absolute;
+  inset: 0;
+
+  background: var(--loader-main);
+}
+
+.leg .side {
+  position: absolute;
+
+  right: -8px;
+  top: 0;
+
+  width: 8px;
+  height: 95px;
+
+  transform-origin: left;
+
+  transform: rotateY(90deg);
+
+  background: var(--loader-dark);
+}
+
+/* =========================================================
+   GROUND
+   ========================================================= */
+
+.furniture-ground {
+  position: absolute;
+
+  width: 155px;
+  height: 36px;
+
+  left: 50%;
+  bottom: 32px;
+
+  transform:
+    translateX(-50%)
+    rotateX(72deg);
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      color-mix(
+        in srgb,
+        var(--color-primary) 24%,
+        transparent
+      ),
+      transparent 70%
+    );
+
+  filter: blur(8px);
+
+  animation: groundPulse 4s ease-in-out infinite;
+}
+
+/* =========================================================
+   TEXT
+   ========================================================= */
+
+.loading-copy {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  margin-top: -4px;
+
+  animation: textAppear 0.8s ease-out both;
+}
+
+.loading-brand {
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size: 28px;
+  font-weight: 700;
+
+  letter-spacing: -1px;
+
+  color: var(--loader-dark);
+}
+
+.loading-message {
+  margin-top: 5px;
+
+  font-size: 12px;
+  font-weight: 500;
+
+  color: color-mix(
+    in srgb,
+    var(--color-primary) 65%,
+    black
+  );
+
+  letter-spacing: 0.02em;
+}
+
+.loading-dots {
+  display: inline-block;
+
+  width: 18px;
+
+  overflow: hidden;
+
+  animation: dots 1.4s steps(4, end) infinite;
+}
+
+/* =========================================================
+   ANIMATION
+   ========================================================= */
+
+@keyframes furnitureFloat {
+  0%,
+  100% {
+    transform:
+      translate(-50%, -50%)
+      rotateX(-8deg)
+      rotateY(-22deg)
+      translateY(2px);
+  }
+
+  50% {
+    transform:
+      translate(-50%, -50%)
+      rotateX(-5deg)
+      rotateY(-12deg)
+      translateY(-7px);
+  }
+}
+
+/* Seat arrives from above */
+
+@keyframes assembleSeat {
+  0%,
+  20% {
+    opacity: 0;
+
+    transform:
+      translate3d(0, -70px, -30px)
+      rotateX(25deg)
+      rotateZ(-5deg);
+  }
+
+  45%,
+  100% {
+    opacity: 1;
+
+    transform:
+      translateZ(22px)
+      rotateX(2deg)
+      rotateZ(0);
+  }
+}
+
+/* Backrest arrives from behind */
+
+@keyframes assembleBackrest {
+  0%,
+  30% {
+    opacity: 0;
+
+    transform:
+      translate3d(0, -30px, -100px)
+      rotateY(35deg)
+      rotateX(15deg);
+  }
+
+  55%,
+  100% {
+    opacity: 1;
+
+    transform:
+      translateZ(-12px)
+      rotateX(2deg)
+      rotateY(0);
+  }
+}
+
+/* Legs arrive individually */
+
+@keyframes assembleLeg1 {
+  0%,
+  10% {
+    opacity: 0;
+
+    transform:
+      translate3d(-55px, -40px, 80px)
+      rotateZ(-35deg)
+      rotateY(-30deg);
+  }
+
+  35%,
+  100% {
+    opacity: 1;
+
+    transform:
+      translateZ(25px)
+      rotateY(-5deg)
+      rotateZ(0);
+  }
+}
+
+@keyframes assembleLeg2 {
+  0%,
+  15% {
+    opacity: 0;
+
+    transform:
+      translate3d(55px, -45px, 80px)
+      rotateZ(35deg)
+      rotateY(30deg);
+  }
+
+  40%,
+  100% {
+    opacity: 1;
+
+    transform:
+      translateZ(25px)
+      rotateY(5deg)
+      rotateZ(0);
+  }
+}
+
+@keyframes assembleLeg3 {
+  0%,
+  20% {
+    opacity: 0;
+
+    transform:
+      translate3d(-60px, 30px, -80px)
+      rotateZ(-45deg);
+  }
+
+  45%,
+  100% {
+    opacity: 1;
+
+    transform:
+      translateZ(-18px)
+      rotateY(-5deg)
+      rotateZ(0);
+  }
+}
+
+@keyframes assembleLeg4 {
+  0%,
+  25% {
+    opacity: 0;
+
+    transform:
+      translate3d(60px, 30px, -80px)
+      rotateZ(45deg);
+  }
+
+  50%,
+  100% {
+    opacity: 1;
+
+    transform:
+      translateZ(-18px)
+      rotateY(5deg)
+      rotateZ(0);
+  }
+}
+
+@keyframes groundPulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform:
+      translateX(-50%)
+      rotateX(72deg)
+      scale(0.9);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform:
+      translateX(-50%)
+      rotateX(72deg)
+      scale(1);
+  }
+}
+
+@keyframes textAppear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dots {
+  0% {
+    width: 0;
+  }
+
+  25% {
+    width: 5px;
+  }
+
+  50% {
+    width: 10px;
+  }
+
+  75%,
+  100% {
+    width: 18px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 480px) {
+  .furniture-loader {
+    transform: scale(0.85);
+  }
+
+  .loading-copy {
+    margin-top: -20px;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .furniture-object,
+  .seat,
+  .backrest,
+  .leg-1,
+  .leg-2,
+  .leg-3,
+  .leg-4,
+  .furniture-ground,
+  .loading-copy,
+  .loading-dots {
+    animation: none;
+  }
+}
