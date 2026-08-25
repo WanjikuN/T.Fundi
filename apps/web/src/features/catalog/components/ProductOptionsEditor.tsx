@@ -6,7 +6,6 @@ import {
 
 import type {
   ProductOption,
-  TenantCharacteristicType,
 } from "../types/catalog.types";
 
 type Props = {
