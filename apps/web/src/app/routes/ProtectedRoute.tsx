@@ -13,7 +13,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isInitializing } = useAuth();
   const location = useLocation();
 
-  if (!isInitializing) {
+  if (isInitializing) {
     return <LoadingScreen />;
   }
 

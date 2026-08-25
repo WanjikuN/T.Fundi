@@ -4,7 +4,6 @@ import AppLayout from "../layouts/AppLayout";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
-import CatalogPage from "../features/catalog/pages/CatalogPage";
 import AIStudioPage from "../features/ai-studio/pages/AIStudioPage";
 import OrdersPage from "../features/commerce/pages/OrdersPage";
 import WorkshopPage from "../features/workshop/pages/WorkshopPage";
@@ -12,6 +11,8 @@ import SettingsPage from "../features/identity/pages/SettingsPage";
 import BrandingPage from "../features/tenant/pages/BrandingPage";
 
 import LoginPage from "../features/auth/pages/LoginPage";
+import CatalogPage from "../features/catalog/pages/CatalogPage";
+import ProductDetailsPage from "../features/catalog/pages/ProductDetailsPage";
 
 const router = createBrowserRouter([
   {
@@ -32,6 +33,10 @@ const router = createBrowserRouter([
       {
         path: "/catalog",
         element: <CatalogPage />,
+      },
+      {
+        path: "/catalog/:slug",
+        element: <ProductDetailsPage />,
       },
       {
         path: "/ai-studio",
