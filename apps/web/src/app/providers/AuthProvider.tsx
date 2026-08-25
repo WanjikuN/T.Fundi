@@ -3,6 +3,7 @@ import {
   useContext,
   useMemo,
   useState,
+  useEffect,
   type ReactNode,
 } from "react";
 
@@ -18,32 +19,63 @@ import type {
   User,
 } from "../../features/auth/types";
 
+const AUTH_STORAGE_KEY = "tfundi_auth";
+
+type StoredAuth = {
+  user: User;
+  accessToken: string;
+  refreshToken: string | null;
+};
+
 interface AuthContextValue {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;
   login: (input: LoginInput) => Promise<AuthResponse>;
   register: (input: RegisterInput) => Promise<AuthResponse>;
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(
-  undefined,
-);
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export default function AuthProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function AuthProvider({ children }: { children: ReactNode }) {
+  const [isInitializing, setIsInitializing] = useState(true);
+
   const [user, setUser] = useState<User | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(
-    null,
-  );
-  const [refreshToken, setRefreshToken] = useState<string | null>(
-    null,
-  );
+
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
+
+  /*
+   * Restore the temporary development session.
+   *
+   * Later this will be replaced with a real
+   * backend session / refresh-token check.
+   */
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(AUTH_STORAGE_KEY);
+
+      if (stored) {
+        const parsed: StoredAuth = JSON.parse(stored);
+
+        if (parsed.user && parsed.accessToken) {
+          setUser(parsed.user);
+          setAccessToken(parsed.accessToken);
+          setRefreshToken(parsed.refreshToken ?? null);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to restore T.Fundi auth session:", error);
+
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    } finally {
+      setIsInitializing(false);
+    }
+  }, []);
 
   async function login(input: LoginInput) {
     const response = await loginRequest(input);
@@ -51,6 +83,14 @@ export default function AuthProvider({
     setUser(response.user);
     setAccessToken(response.accessToken);
     setRefreshToken(response.refreshToken);
+
+    const storedAuth: StoredAuth = {
+      user: response.user,
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+    };
+
+    sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(storedAuth));
 
     return response;
   }
@@ -62,6 +102,14 @@ export default function AuthProvider({
     setAccessToken(response.accessToken);
     setRefreshToken(response.refreshToken);
 
+    const storedAuth: StoredAuth = {
+      user: response.user,
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+    };
+
+    sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(storedAuth));
+
     return response;
   }
 
@@ -69,6 +117,8 @@ export default function AuthProvider({
     setUser(null);
     setAccessToken(null);
     setRefreshToken(null);
+
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
   }
 
   const value = useMemo(
@@ -77,27 +127,23 @@ export default function AuthProvider({
       accessToken,
       refreshToken,
       isAuthenticated: Boolean(accessToken && user),
+      isInitializing,
+
       login,
       register,
       logout,
     }),
-    [user, accessToken, refreshToken],
+    [user, accessToken, refreshToken, isInitializing],
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error(
-      "useAuth must be used within an AuthProvider",
-    );
+    throw new Error("useAuth must be used within an AuthProvider");
   }
 
   return context;
