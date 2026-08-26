@@ -100,7 +100,7 @@ const router = createBrowserRouter([
        */
 
       {
-        path: "catalog/:slug",
+        path: "catalog/products/:slug",
         element: <ProductDetailsPage />,
       },
 

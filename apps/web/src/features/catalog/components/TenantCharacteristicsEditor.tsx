@@ -1,12 +1,12 @@
 import {
-  Plus,
-  Trash2,
   GripVertical,
-  Palette,
-  Type,
   Hash,
   Image as ImageIcon,
   List,
+  Palette,
+  Plus,
+  Trash2,
+  Type,
 } from "lucide-react";
 
 import type {
@@ -22,6 +22,10 @@ type Props = {
     characteristics: TenantCharacteristic[],
   ) => void;
 };
+
+/* =========================================================
+   CHARACTERISTIC TYPES
+   ========================================================= */
 
 const CHARACTERISTIC_TYPES: {
   value: TenantCharacteristicType;
@@ -70,23 +74,53 @@ const CHARACTERISTIC_TYPES: {
   },
 ];
 
+const VALUE_TYPES: TenantCharacteristicType[] = [
+  "select",
+  "color",
+  "material",
+  "finish",
+  "size",
+];
+
 const createId = () =>
   `${Date.now()}-${Math.random()
     .toString(36)
     .slice(2)}`;
 
-const TenantCharacteristicsEditor = ({
+/* =========================================================
+   COMPONENT
+   ========================================================= */
+
+const ProductCharacteristicsEditor = ({
   characteristics,
   onChange,
 }: Props) => {
+  /* =======================================================
+     ADD CHARACTERISTIC
+     ======================================================= */
+
   const addCharacteristic = () => {
     const characteristic: TenantCharacteristic = {
-      id: createId(),
+      id: `product-characteristic-${createId()}`,
+
       name: "New characteristic",
+
       type: "select",
+
+      description: "",
+
       required: false,
+
       active: true,
-      values: [],
+
+      values: [
+        {
+          id: `value-${createId()}`,
+          name: "New value",
+          active: true,
+        },
+      ],
+
       sequence: characteristics.length,
     };
 
@@ -96,51 +130,82 @@ const TenantCharacteristicsEditor = ({
     ]);
   };
 
+  /* =======================================================
+     UPDATE CHARACTERISTIC
+     ======================================================= */
+
   const updateCharacteristic = (
     id: string,
     updates: Partial<TenantCharacteristic>,
   ) => {
     onChange(
-      characteristics.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              ...updates,
-            }
-          : item,
+      characteristics.map(
+        (characteristic) =>
+          characteristic.id === id
+            ? {
+                ...characteristic,
+                ...updates,
+              }
+            : characteristic,
       ),
     );
   };
+
+  /* =======================================================
+     REMOVE CHARACTERISTIC
+     ======================================================= */
 
   const removeCharacteristic = (
     id: string,
   ) => {
     onChange(
-      characteristics.filter(
-        (item) => item.id !== id,
-      ),
+      characteristics
+        .filter(
+          (characteristic) =>
+            characteristic.id !== id,
+        )
+        .map(
+          (
+            characteristic,
+            index,
+          ) => ({
+            ...characteristic,
+            sequence: index,
+          }),
+        ),
     );
   };
+
+  /* =======================================================
+     ADD VALUE
+     ======================================================= */
 
   const addValue = (
     characteristic: TenantCharacteristic,
   ) => {
-    const value: TenantCharacteristicValue = {
-      id: createId(),
-      name: "New value",
-      active: true,
-    };
+    const newValue: TenantCharacteristicValue =
+      {
+        id: `value-${createId()}`,
+
+        name: "New value",
+
+        active: true,
+      };
 
     updateCharacteristic(
       characteristic.id,
       {
         values: [
           ...characteristic.values,
-          value,
+          newValue,
         ],
       },
     );
   };
+
+  /* =======================================================
+     UPDATE VALUE
+     ======================================================= */
 
   const updateValue = (
     characteristicId: string,
@@ -150,10 +215,13 @@ const TenantCharacteristicsEditor = ({
     const characteristic =
       characteristics.find(
         (item) =>
-          item.id === characteristicId,
+          item.id ===
+          characteristicId,
       );
 
-    if (!characteristic) return;
+    if (!characteristic) {
+      return;
+    }
 
     updateCharacteristic(
       characteristicId,
@@ -172,6 +240,10 @@ const TenantCharacteristicsEditor = ({
     );
   };
 
+  /* =======================================================
+     REMOVE VALUE
+     ======================================================= */
+
   const removeValue = (
     characteristicId: string,
     valueId: string,
@@ -179,10 +251,13 @@ const TenantCharacteristicsEditor = ({
     const characteristic =
       characteristics.find(
         (item) =>
-          item.id === characteristicId,
+          item.id ===
+          characteristicId,
       );
 
-    if (!characteristic) return;
+    if (!characteristic) {
+      return;
+    }
 
     updateCharacteristic(
       characteristicId,
@@ -196,8 +271,14 @@ const TenantCharacteristicsEditor = ({
     );
   };
 
+  /* =======================================================
+     RENDER
+     ======================================================= */
+
   return (
     <section className="rounded-3xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+      {/* HEADER */}
+
       <div className="flex items-start justify-between gap-4">
         <div>
           <p
@@ -207,7 +288,7 @@ const TenantCharacteristicsEditor = ({
                 "var(--color-primary)",
             }}
           >
-            Tenant configuration
+            Product configuration
           </p>
 
           <h2 className="mt-1 text-lg font-semibold text-gray-900">
@@ -215,9 +296,10 @@ const TenantCharacteristicsEditor = ({
           </h2>
 
           <p className="mt-1 max-w-2xl text-xs leading-5 text-gray-500">
-            Define the characteristics that matter
-            for this product. AI will use these
-            definitions when analysing the photos.
+            These characteristics will be used
+            by AI when analysing this product.
+            They start from your tenant defaults,
+            but can be customized for this product.
           </p>
         </div>
 
@@ -231,26 +313,48 @@ const TenantCharacteristicsEditor = ({
           }}
         >
           <Plus size={14} />
-          Add characteristic
+
+          Add
         </button>
       </div>
+
+      {/* CHARACTERISTICS */}
 
       <div className="mt-6 space-y-4">
         {characteristics.length === 0 && (
           <div className="rounded-2xl border border-dashed border-black/10 bg-black/[0.02] p-8 text-center">
             <p className="text-sm font-semibold text-gray-600">
-              No characteristics yet
+              No product characteristics
             </p>
 
-            <p className="mt-1 text-xs text-gray-400">
-              Add things such as Wood Species,
-              Upholstery, Leg Style or Size.
+            <p className="mt-1 text-xs leading-5 text-gray-400">
+              Add characteristics such as Wood
+              Species, Upholstery, Configuration,
+              Leg Style or any custom field your
+              business needs.
             </p>
+
+            <button
+              type="button"
+              onClick={addCharacteristic}
+              className="mt-4 inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-[var(--color-primary-foreground)]"
+              style={{
+                backgroundColor:
+                  "var(--color-primary)",
+              }}
+            >
+              <Plus size={14} />
+
+              Add characteristic
+            </button>
           </div>
         )}
 
         {characteristics.map(
-          (characteristic, index) => (
+          (
+            characteristic,
+            index,
+          ) => (
             <div
               key={characteristic.id}
               className="rounded-2xl border border-black/10 bg-black/[0.015] p-4"
@@ -262,14 +366,22 @@ const TenantCharacteristicsEditor = ({
                 />
 
                 <div className="min-w-0 flex-1">
-                  <div className="grid gap-3 sm:grid-cols-[1fr_190px_auto]">
+                  {/* MAIN SETTINGS */}
+
+                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_190px_auto]">
                     <input
-                      value={characteristic.name}
-                      onChange={(event) =>
+                      value={
+                        characteristic.name
+                      }
+                      onChange={(
+                        event,
+                      ) =>
                         updateCharacteristic(
                           characteristic.id,
                           {
-                            name: event.target.value,
+                            name: event
+                              .target
+                              .value,
                           },
                         )
                       }
@@ -282,22 +394,41 @@ const TenantCharacteristicsEditor = ({
                         value={
                           characteristic.type
                         }
-                        onChange={(event) =>
+                        onChange={(
+                          event,
+                        ) => {
+                          const type =
+                            event.target
+                              .value as TenantCharacteristicType;
+
+                          /*
+                           * When switching from a
+                           * value-based type to a
+                           * free-form type, retain
+                           * the values in the object.
+                           *
+                           * This allows the user to
+                           * switch back without
+                           * unexpectedly losing data.
+                           */
                           updateCharacteristic(
                             characteristic.id,
                             {
-                              type: event.target
-                                .value as TenantCharacteristicType,
+                              type,
                             },
-                          )
-                        }
+                          );
+                        }}
                         className="h-11 w-full appearance-none rounded-xl border border-black/10 bg-white px-3 pr-8 text-sm outline-none focus:border-[var(--color-primary)]"
                       >
                         {CHARACTERISTIC_TYPES.map(
                           (type) => (
                             <option
-                              key={type.value}
-                              value={type.value}
+                              key={
+                                type.value
+                              }
+                              value={
+                                type.value
+                              }
                             >
                               {type.label}
                             </option>
@@ -316,9 +447,38 @@ const TenantCharacteristicsEditor = ({
                       className="flex h-11 w-11 items-center justify-center rounded-xl text-gray-400 transition hover:bg-red-50 hover:text-red-500"
                       aria-label={`Remove ${characteristic.name}`}
                     >
-                      <Trash2 size={16} />
+                      <Trash2
+                        size={16}
+                      />
                     </button>
                   </div>
+
+                  {/* DESCRIPTION */}
+
+                  <div className="mt-3">
+                    <input
+                      value={
+                        characteristic.description ??
+                        ""
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        updateCharacteristic(
+                          characteristic.id,
+                          {
+                            description:
+                              event.target
+                                .value,
+                          },
+                        )
+                      }
+                      placeholder="Optional instruction or description for this characteristic"
+                      className="h-10 w-full rounded-xl border border-black/10 bg-white px-3 text-xs outline-none focus:border-[var(--color-primary)]"
+                    />
+                  </div>
+
+                  {/* REQUIRED */}
 
                   <div className="mt-3 flex items-center gap-2">
                     <input
@@ -328,12 +488,15 @@ const TenantCharacteristicsEditor = ({
                         characteristic.required ??
                         false
                       }
-                      onChange={(event) =>
+                      onChange={(
+                        event,
+                      ) =>
                         updateCharacteristic(
                           characteristic.id,
                           {
                             required:
-                              event.target.checked,
+                              event.target
+                                .checked,
                           },
                         )
                       }
@@ -344,24 +507,30 @@ const TenantCharacteristicsEditor = ({
                       htmlFor={`required-${characteristic.id}`}
                       className="text-xs text-gray-600"
                     >
-                      Required for this product
+                      Required for this
+                      product
                     </label>
                   </div>
 
-                  {[
-                    "select",
-                    "color",
-                    "material",
-                    "finish",
-                    "size",
-                  ].includes(
+                  {/* VALUES */}
+
+                  {VALUE_TYPES.includes(
                     characteristic.type,
                   ) && (
                     <div className="mt-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold text-gray-600">
-                          Values
-                        </p>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-600">
+                            Available values
+                          </p>
+
+                          <p className="mt-0.5 text-[10px] text-gray-400">
+                            Choose from these
+                            values when
+                            configuring the
+                            product.
+                          </p>
+                        </div>
 
                         <button
                           type="button"
@@ -376,18 +545,25 @@ const TenantCharacteristicsEditor = ({
                               "var(--color-primary)",
                           }}
                         >
-                          <Plus size={13} />
+                          <Plus
+                            size={13}
+                          />
+
                           Add value
                         </button>
                       </div>
 
-                      <div className="mt-2 space-y-2">
+                      <div className="mt-3 space-y-2">
                         {characteristic.values.map(
                           (value) => (
                             <div
-                              key={value.id}
+                              key={
+                                value.id
+                              }
                               className="flex items-center gap-2"
                             >
+                              {/* COLOR */}
+
                               {characteristic.type ===
                                 "color" && (
                                 <input
@@ -396,7 +572,9 @@ const TenantCharacteristicsEditor = ({
                                     value.hexCode ??
                                     "#cccccc"
                                   }
-                                  onChange={(event) =>
+                                  onChange={(
+                                    event,
+                                  ) =>
                                     updateValue(
                                       characteristic.id,
                                       value.id,
@@ -409,12 +587,19 @@ const TenantCharacteristicsEditor = ({
                                     )
                                   }
                                   className="h-9 w-9 cursor-pointer rounded-lg border-0 bg-transparent p-0"
+                                  aria-label={`${value.name} colour`}
                                 />
                               )}
 
+                              {/* VALUE NAME */}
+
                               <input
-                                value={value.name}
-                                onChange={(event) =>
+                                value={
+                                  value.name
+                                }
+                                onChange={(
+                                  event,
+                                ) =>
                                   updateValue(
                                     characteristic.id,
                                     value.id,
@@ -429,6 +614,33 @@ const TenantCharacteristicsEditor = ({
                                 className="h-10 min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 text-xs outline-none focus:border-[var(--color-primary)]"
                               />
 
+                              {/* VALUE DESCRIPTION */}
+
+                              <input
+                                value={
+                                  value.description ??
+                                  ""
+                                }
+                                onChange={(
+                                  event,
+                                ) =>
+                                  updateValue(
+                                    characteristic.id,
+                                    value.id,
+                                    {
+                                      description:
+                                        event
+                                          .target
+                                          .value,
+                                    },
+                                  )
+                                }
+                                placeholder="Description"
+                                className="hidden h-10 min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-3 text-xs outline-none focus:border-[var(--color-primary)] md:block"
+                              />
+
+                              {/* REMOVE */}
+
                               <button
                                 type="button"
                                 onClick={() =>
@@ -437,27 +649,65 @@ const TenantCharacteristicsEditor = ({
                                     value.id,
                                   )
                                 }
-                                className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-300 hover:bg-red-50 hover:text-red-500"
+                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-300 hover:bg-red-50 hover:text-red-500"
+                                aria-label={`Remove ${value.name}`}
                               >
-                                <Trash2 size={14} />
+                                <Trash2
+                                  size={14}
+                                />
                               </button>
                             </div>
                           ),
                         )}
 
-                        {!characteristic.values
+                        {!characteristic
+                          .values
                           .length && (
-                          <p className="rounded-xl bg-white p-3 text-xs text-gray-400">
-                            No values configured.
-                            Add one above.
-                          </p>
+                          <div className="rounded-xl bg-white p-3 text-xs text-gray-400">
+                            No values
+                            configured.
+                            Add a value
+                            above.
+                          </div>
                         )}
                       </div>
                     </div>
                   )}
 
+                  {/* FREE FORM HELP */}
+
+                  {characteristic.type ===
+                    "text" && (
+                    <p className="mt-4 rounded-xl bg-white p-3 text-xs leading-5 text-gray-500">
+                      The product creator will
+                      enter a text value for this
+                      characteristic.
+                    </p>
+                  )}
+
+                  {characteristic.type ===
+                    "number" && (
+                    <p className="mt-4 rounded-xl bg-white p-3 text-xs leading-5 text-gray-500">
+                      The product creator will
+                      enter a numeric value for
+                      this characteristic.
+                    </p>
+                  )}
+
+                  {characteristic.type ===
+                    "image" && (
+                    <p className="mt-4 rounded-xl bg-white p-3 text-xs leading-5 text-gray-500">
+                      The product creator will
+                      provide an image for this
+                      characteristic.
+                    </p>
+                  )}
+
+                  {/* FOOTER */}
+
                   <p className="mt-3 text-[10px] text-gray-400">
-                    Characteristic {index + 1} ·{" "}
+                    Characteristic{" "}
+                    {index + 1} ·{" "}
                     {characteristic.type}
                   </p>
                 </div>
@@ -470,4 +720,4 @@ const TenantCharacteristicsEditor = ({
   );
 };
 
-export default TenantCharacteristicsEditor;
+export default ProductCharacteristicsEditor;

@@ -17,10 +17,7 @@ export type ProductCategory =
    PRODUCT STATUS
    ========================================================= */
 
-export type ProductStatus =
-  | "draft"
-  | "active"
-  | "archived";
+export type ProductStatus = "draft" | "active" | "archived";
 
 /* =========================================================
    PRODUCT GENERATION STATUS
@@ -256,10 +253,7 @@ export type ProductImage = {
    PRODUCT MEDIA
    ========================================================= */
 
-export type ProductMediaType =
-  | "image"
-  | "360"
-  | "model3d";
+export type ProductMediaType = "image" | "360" | "model3d";
 
 export type ProductMedia = {
   id: string;
@@ -449,7 +443,8 @@ export type Product = {
   price: number;
 
   currency: string;
-
+  updatedAt?: string;
+  quantity: number;
   /**
    * Primary product image.
    */
@@ -680,7 +675,7 @@ export type CreateProductInput = {
   price: number;
 
   currency: string;
-
+  quantity: number;
   dimensions?: ProductDimensions;
 
   /**
