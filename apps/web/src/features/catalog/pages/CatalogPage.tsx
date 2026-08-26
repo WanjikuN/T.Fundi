@@ -1,10 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import {
   CheckCircle2,
   Clock3,
   Package,
+  Plus,
   Search,
+  X,
 } from "lucide-react";
+
+import { useNavigate } from "react-router-dom";
 
 import type {
   Product,
@@ -15,36 +24,130 @@ import { getProducts } from "../api/products.api";
 import ProductGrid from "../components/ProductGrid";
 import { mockProducts } from "../types/catalog.mock";
 
-const categories: Array<{
+import { useTenant } from "../../../app/providers/TenantProvider";
+
+/* =========================================================
+   CATEGORY LABELS
+   ========================================================= */
+
+const CATEGORY_LABELS: Record<
+  ProductCategory,
+  string
+> = {
+  sofas: "Sofas",
+  chairs: "Chairs",
+  tables: "Tables",
+  beds: "Beds",
+  storage: "Storage",
+  outdoor: "Outdoor",
+  lighting: "Lighting",
+  desks: "Desks",
+  other: "Other",
+};
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+type StatusFilter =
+  | "all"
+  | "draft"
+  | "active"
+  | "archived";
+
+const STATUS_OPTIONS: Array<{
+  value: StatusFilter;
   label: string;
-  value: ProductCategory | "all";
 }> = [
-  { label: "All Furniture", value: "all" },
-  { label: "Sofas", value: "sofas" },
-  { label: "Chairs", value: "chairs" },
-  { label: "Tables", value: "tables" },
-  { label: "Beds", value: "beds" },
-  { label: "Storage", value: "storage" },
-  { label: "Outdoor", value: "outdoor" },
-  { label: "Lighting", value: "lighting" },
-  { label: "Desks", value: "desks" },
-  { label: "Other", value: "other" },
+  {
+    value: "all",
+    label: "All",
+  },
+  {
+    value: "draft",
+    label: "Drafts",
+  },
+  {
+    value: "active",
+    label: "Published",
+  },
+  {
+    value: "archived",
+    label: "Archived",
+  },
 ];
 
-type StatusFilter = "all" | "draft" | "active" | "archived";
+/* =========================================================
+   PAGE
+   ========================================================= */
 
 const CatalogPage = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const navigate = useNavigate();
+
+  const {
+    catalogSettings,
+  } = useTenant();
+
+  const [products, setProducts] =
+    useState<Product[]>([]);
+
   const [category, setCategory] =
-    useState<ProductCategory | "all">("all");
+    useState<ProductCategory | "all">(
+      "all",
+    );
 
   const [status, setStatus] =
     useState<StatusFilter>("all");
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] =
+    useState("");
 
   const [isLoading, setIsLoading] =
     useState(true);
+
+  /* =======================================================
+     TENANT CATEGORIES
+     ======================================================= */
+
+  const enabledCategories =
+    catalogSettings.categories ?? [];
+
+  const categories = useMemo(() => {
+    return [
+      {
+        label: "All Furniture",
+        value: "all" as const,
+      },
+
+      ...enabledCategories.map(
+        (value) => ({
+          label:
+            CATEGORY_LABELS[value] ??
+            value,
+
+          value,
+        }),
+      ),
+    ];
+  }, [enabledCategories]);
+
+  /* =======================================================
+     VALIDATE CATEGORY
+     ======================================================= */
+
+  useEffect(() => {
+    if (
+      category !== "all" &&
+      !enabledCategories.includes(
+        category,
+      )
+    ) {
+      setCategory("all");
+    }
+  }, [
+    category,
+    enabledCategories,
+  ]);
 
   /* =======================================================
      LOAD PRODUCTS
@@ -62,15 +165,8 @@ const CatalogPage = () => {
           return;
         }
 
-        /*
-         * Keep mock products visible when there are
-         * no persisted products yet.
-         *
-         * Once the tenant has created real products,
-         * those become the primary catalog data.
-         */
         setProducts(
-          storedProducts.length
+          storedProducts.length > 0
             ? storedProducts
             : mockProducts,
         );
@@ -81,7 +177,9 @@ const CatalogPage = () => {
         );
 
         if (mounted) {
-          setProducts(mockProducts);
+          setProducts(
+            mockProducts,
+          );
         }
       } finally {
         if (mounted) {
@@ -90,7 +188,7 @@ const CatalogPage = () => {
       }
     };
 
-    loadProducts();
+    void loadProducts();
 
     return () => {
       mounted = false;
@@ -101,128 +199,373 @@ const CatalogPage = () => {
      COUNTS
      ======================================================= */
 
-  const draftCount = useMemo(
-    () =>
-      products.filter(
-        (product) =>
-          product.status === "draft",
-      ).length,
-    [products],
-  );
+  const counts = useMemo(() => {
+    let drafts = 0;
+    let published = 0;
 
-  const publishedCount = useMemo(
-    () =>
-      products.filter(
-        (product) =>
-          product.status === "active",
-      ).length,
-    [products],
-  );
+    for (const product of products) {
+      if (
+        product.status === "draft"
+      ) {
+        drafts += 1;
+      }
+
+      if (
+        product.status === "active"
+      ) {
+        published += 1;
+      }
+    }
+
+    return {
+      total: products.length,
+      drafts,
+      published,
+    };
+  }, [products]);
 
   /* =======================================================
-     FILTER
+     FILTERED PRODUCTS
      ======================================================= */
 
-  const filteredProducts = useMemo(() => {
-    const query =
-      search.trim().toLowerCase();
+  const filteredProducts =
+    useMemo(() => {
+      const query =
+        search
+          .trim()
+          .toLowerCase();
 
-    return products.filter((product) => {
-      const matchesCategory =
-        category === "all" ||
-        product.category === category;
+      return products.filter(
+        (product) => {
+          const matchesCategory =
+            category === "all" ||
+            product.category ===
+              category;
 
-      const matchesStatus =
-        status === "all" ||
-        product.status === status;
+          const matchesStatus =
+            status === "all" ||
+            product.status ===
+              status;
 
-      const matchesSearch =
-        !query ||
-        product.name
-          .toLowerCase()
-          .includes(query) ||
-        product.description
-          .toLowerCase()
-          .includes(query) ||
-        product.category
-          .toLowerCase()
-          .includes(query);
+          if (
+            !matchesCategory ||
+            !matchesStatus
+          ) {
+            return false;
+          }
 
-      return (
-        matchesCategory &&
-        matchesStatus &&
-        matchesSearch
+          if (!query) {
+            return true;
+          }
+
+          return (
+            product.name
+              .toLowerCase()
+              .includes(query) ||
+            product.description
+              .toLowerCase()
+              .includes(query) ||
+            product.category
+              .toLowerCase()
+              .includes(query)
+          );
+        },
       );
-    });
-  }, [
-    products,
-    category,
-    status,
-    search,
-  ]);
+    }, [
+      products,
+      category,
+      status,
+      search,
+    ]);
+
+  /* =======================================================
+     FILTER HELPERS
+     ======================================================= */
+
+  const hasActiveFilters =
+    category !== "all" ||
+    status !== "all" ||
+    search.trim() !== "";
+
+  const clearFilters = () => {
+    setCategory("all");
+    setStatus("all");
+    setSearch("");
+  };
 
   /* =======================================================
      RENDER
      ======================================================= */
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-[var(--color-background)] px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-
+    <main
+      className="
+        h-[calc(100vh-4rem)]
+        overflow-hidden
+        bg-[var(--color-background)]
+      "
+    >
+      <div
+        className="
+          mx-auto
+          flex
+          h-full
+          w-full
+          max-w-[1500px]
+          min-h-0
+          flex-col
+          px-4
+          py-4
+          sm:px-6
+          lg:px-8
+        "
+      >
         {/* =================================================
             HEADER
            ================================================= */}
 
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p
-              className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em]"
-              style={{
-                color:
-                  "var(--color-primary)",
-              }}
+        <header className="shrink-0">
+          <div
+            className="
+              flex
+              flex-col
+              gap-4
+              lg:flex-row
+              lg:items-center
+              lg:justify-between
+            "
+          >
+            {/* TITLE */}
+
+            <div className="min-w-0">
+              <div className="mb-1 flex items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{
+                    backgroundColor:
+                      "var(--color-primary)",
+                  }}
+                />
+
+                <p
+                  className="
+                    text-[10px]
+                    font-bold
+                    uppercase
+                    tracking-[0.2em]
+                  "
+                  style={{
+                    color:
+                      "var(--color-primary)",
+                  }}
+                >
+                  The Collection
+                </p>
+              </div>
+
+              <h1
+                className="
+                  text-2xl
+                  font-bold
+                  tracking-tight
+                  text-gray-900
+                  sm:text-3xl
+                "
+              >
+                Furniture collection
+              </h1>
+
+              <p
+                className="
+                  mt-1
+                  max-w-xl
+                  text-sm
+                  leading-5
+                  text-gray-500
+                "
+              >
+                Manage products, review
+                drafts and publish your
+                collection.
+              </p>
+            </div>
+
+            {/* ACTIONS */}
+
+            <div
+              className="
+                flex
+                w-full
+                flex-col
+                gap-2
+                sm:flex-row
+                lg:w-auto
+              "
             >
-              The Collection
-            </p>
+              {/* SEARCH */}
 
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Furniture made for your space
-            </h1>
+              <div
+                className="
+                  relative
+                  min-w-0
+                  flex-1
+                  sm:w-64
+                  lg:w-72
+                "
+              >
+                <Search
+                  size={17}
+                  className="
+                    pointer-events-none
+                    absolute
+                    left-3.5
+                    top-1/2
+                    -translate-y-1/2
+                    text-gray-400
+                  "
+                />
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
-              Manage your furniture collection,
-              review drafts and publish products
-              when they are ready.
-            </p>
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) =>
+                    setSearch(
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Search products..."
+                  className="
+                    h-10
+                    w-full
+                    rounded-xl
+                    border
+                    border-black/10
+                    bg-white
+                    pl-10
+                    pr-9
+                    text-sm
+                    text-gray-800
+                    shadow-sm
+                    outline-none
+                    transition
+                    placeholder:text-gray-400
+                    focus:border-[var(--color-primary)]
+                    focus:ring-4
+                    focus:ring-[var(--color-primary)]/10
+                  "
+                />
+
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSearch("")
+                    }
+                    aria-label="Clear search"
+                    className="
+                      absolute
+                      right-2.5
+                      top-1/2
+                      -translate-y-1/2
+                      rounded-full
+                      p-1
+                      text-gray-400
+                      transition
+                      hover:bg-black/5
+                      hover:text-gray-700
+                    "
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* ADD PRODUCT */}
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    "/catalog/products/new",
+                  )
+                }
+                className="
+                  inline-flex
+                  h-10
+                  shrink-0
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-xl
+                  px-4
+                  text-sm
+                  font-bold
+                  shadow-sm
+                  transition
+                  hover:-translate-y-0.5
+                  hover:shadow-md
+                  active:translate-y-0
+                "
+                style={{
+                  backgroundColor:
+                    "var(--color-primary)",
+
+                  color:
+                    "var(--color-primary-foreground)",
+                }}
+              >
+                <Plus size={16} />
+
+                <span>
+                  Add Product
+                </span>
+              </button>
+            </div>
           </div>
-
-          {/* Search */}
-
-          <div className="relative w-full lg:max-w-sm">
-            <Search
-              size={18}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-
-            <input
-              type="search"
-              value={search}
-              onChange={(event) =>
-                setSearch(
-                  event.target.value,
-                )
-              }
-              placeholder="Search furniture..."
-              className="w-full rounded-xl border border-black/10 bg-white py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10"
-            />
-          </div>
-        </div>
+        </header>
 
         {/* =================================================
-            QUICK STATUS
+            COMPACT SUMMARY
            ================================================= */}
 
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:max-w-xl">
+        <div
+          className="
+            mt-4
+            flex
+            shrink-0
+            flex-wrap
+            items-center
+            gap-x-5
+            gap-y-2
+            border-b
+            border-black/[0.07]
+            pb-3
+          "
+        >
+          {/* TOTAL */}
+
+          <div className="flex items-center gap-2">
+            <Package
+              size={14}
+              className="text-gray-400"
+            />
+
+            <span
+              className="
+                text-xs
+                font-semibold
+                text-gray-600
+              "
+            >
+              {counts.total}{" "}
+              {counts.total === 1
+                ? "product"
+                : "products"}
+            </span>
+          </div>
+
+          {/* DRAFTS */}
+
           <button
             type="button"
             onClick={() =>
@@ -232,26 +575,26 @@ const CatalogPage = () => {
                   : "draft",
               )
             }
-            className={`flex items-center gap-3 rounded-2xl border bg-white px-4 py-3 text-left transition ${
-              status === "draft"
-                ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/10"
-                : "border-black/10 hover:border-black/20"
-            }`}
+            className={`
+              inline-flex
+              items-center
+              gap-1.5
+              text-xs
+              font-semibold
+              transition
+              ${
+                status === "draft"
+                  ? "text-[var(--color-primary)]"
+                  : "text-gray-400 hover:text-gray-700"
+              }
+            `}
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-              <Clock3 size={17} />
-            </div>
+            <Clock3 size={14} />
 
-            <div>
-              <p className="text-lg font-bold text-gray-900">
-                {draftCount}
-              </p>
-
-              <p className="text-xs text-gray-500">
-                Drafts
-              </p>
-            </div>
+            {counts.drafts} drafts
           </button>
+
+          {/* PUBLISHED */}
 
           <button
             type="button"
@@ -262,106 +605,205 @@ const CatalogPage = () => {
                   : "active",
               )
             }
-            className={`flex items-center gap-3 rounded-2xl border bg-white px-4 py-3 text-left transition ${
-              status === "active"
-                ? "border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/10"
-                : "border-black/10 hover:border-black/20"
-            }`}
+            className={`
+              inline-flex
+              items-center
+              gap-1.5
+              text-xs
+              font-semibold
+              transition
+              ${
+                status === "active"
+                  ? "text-[var(--color-primary)]"
+                  : "text-gray-400 hover:text-gray-700"
+              }
+            `}
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-              <CheckCircle2 size={17} />
-            </div>
+            <CheckCircle2
+              size={14}
+            />
 
-            <div>
-              <p className="text-lg font-bold text-gray-900">
-                {publishedCount}
-              </p>
-
-              <p className="text-xs text-gray-500">
-                Published
-              </p>
-            </div>
+            {counts.published}{" "}
+            published
           </button>
         </div>
 
         {/* =================================================
-            CATEGORIES
+            FILTERS
            ================================================= */}
 
-        <div className="mt-6 flex gap-2 overflow-x-auto pb-2">
-          {categories.map((item) => {
-            const isActive =
-              category === item.value;
+        <section className="mt-3 shrink-0">
+          {/* CATEGORIES */}
 
-            return (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() =>
-                  setCategory(
-                    item.value,
-                  )
-                }
-                className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
-                  isActive
-                    ? "text-[var(--color-primary-foreground)] shadow-sm"
-                    : "bg-white text-gray-600 hover:bg-black/5"
-                }`}
-                style={
-                  isActive
-                    ? {
-                        backgroundColor:
-                          "var(--color-primary)",
+          <div
+            className="
+              flex
+              gap-1.5
+              overflow-x-auto
+              pb-1
+              [scrollbar-width:none]
+              [&::-webkit-scrollbar]:hidden
+            "
+          >
+            {categories.map(
+              (item) => {
+                const isActive =
+                  category ===
+                  item.value;
+
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() =>
+                      setCategory(
+                        item.value,
+                      )
+                    }
+                    className={`
+                      shrink-0
+                      rounded-lg
+                      px-3
+                      py-1.5
+                      text-xs
+                      font-semibold
+                      transition
+                      ${
+                        isActive
+                          ? "text-[var(--color-primary-foreground)] shadow-sm"
+                          : "bg-white text-gray-500 hover:bg-black/[0.04] hover:text-gray-800"
                       }
-                    : undefined
-                }
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
+                    `}
+                    style={
+                      isActive
+                        ? {
+                            backgroundColor:
+                              "var(--color-primary)",
+                          }
+                        : undefined
+                    }
+                  >
+                    {item.label}
+                  </button>
+                );
+              },
+            )}
+          </div>
 
-        {/* =================================================
-            STATUS FILTER
-           ================================================= */}
+          {/* STATUS */}
 
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {(
-            [
-              ["all", "All products"],
-              ["draft", "Drafts"],
-              ["active", "Published"],
-              ["archived", "Archived"],
-            ] as const
-          ).map(
-            ([value, label]) => (
+          <div
+            className="
+              mt-2
+              flex
+              min-w-0
+              items-center
+              justify-between
+              gap-3
+            "
+          >
+            <div
+              className="
+                flex
+                min-w-0
+                gap-1
+                overflow-x-auto
+                [scrollbar-width:none]
+                [&::-webkit-scrollbar]:hidden
+              "
+            >
+              {STATUS_OPTIONS.map(
+                (option) => {
+                  const isActive =
+                    status ===
+                    option.value;
+
+                  return (
+                    <button
+                      key={
+                        option.value
+                      }
+                      type="button"
+                      onClick={() =>
+                        setStatus(
+                          option.value,
+                        )
+                      }
+                      className={`
+                        shrink-0
+                        rounded-md
+                        px-2.5
+                        py-1.5
+                        text-[11px]
+                        font-semibold
+                        transition
+                        ${
+                          isActive
+                            ? "bg-black text-white"
+                            : "text-gray-400 hover:bg-black/[0.04] hover:text-gray-700"
+                        }
+                      `}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                },
+              )}
+            </div>
+
+            {hasActiveFilters && (
               <button
-                key={value}
                 type="button"
-                onClick={() =>
-                  setStatus(value)
+                onClick={
+                  clearFilters
                 }
-                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                  status === value
-                    ? "bg-black text-white"
-                    : "bg-black/[0.04] text-gray-500 hover:bg-black/[0.08]"
-                }`}
+                className="
+                  shrink-0
+                  text-[11px]
+                  font-semibold
+                  text-gray-400
+                  transition
+                  hover:text-gray-700
+                "
               >
-                {label}
+                Clear
               </button>
-            ),
-          )}
-        </div>
+            )}
+          </div>
+        </section>
 
         {/* =================================================
-            RESULTS
+            PRODUCT RESULTS
            ================================================= */}
 
-        <div className="mt-7">
-          <div className="mb-5 flex items-center justify-between">
+        <section
+          className="
+            mt-4
+            flex
+            min-h-0
+            flex-1
+            flex-col
+          "
+        >
+          {/* RESULTS HEADER */}
+
+          <div
+            className="
+              mb-3
+              flex
+              shrink-0
+              items-center
+              justify-between
+            "
+          >
             <div>
-              <p className="text-sm font-semibold text-gray-800">
+              <p
+                className="
+                  text-sm
+                  font-semibold
+                  text-gray-800
+                "
+              >
                 {isLoading
                   ? "Loading products..."
                   : `${filteredProducts.length} ${
@@ -374,11 +816,19 @@ const CatalogPage = () => {
 
               {!isLoading &&
                 status !== "all" && (
-                  <p className="mt-0.5 text-xs text-gray-400">
+                  <p
+                    className="
+                      mt-0.5
+                      text-[11px]
+                      text-gray-400
+                    "
+                  >
                     Showing{" "}
-                    {status === "draft"
+                    {status ===
+                    "draft"
                       ? "draft"
-                      : status === "active"
+                      : status ===
+                          "active"
                         ? "published"
                         : "archived"}{" "}
                     products
@@ -387,40 +837,44 @@ const CatalogPage = () => {
             </div>
 
             <Package
-              size={18}
+              size={17}
               className="text-gray-300"
             />
           </div>
 
-          {isLoading ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {[1, 2, 3].map(
-                (item) => (
-                  <div
-                    key={item}
-                    className="overflow-hidden rounded-3xl border border-black/10 bg-white"
-                  >
-                    <div className="aspect-[4/3] animate-pulse bg-black/[0.04]" />
+         {/* Scrollable product area */}
 
-                    <div className="space-y-3 p-5">
-                      <div className="h-3 w-20 animate-pulse rounded bg-black/[0.06]" />
+          <div className="h-[calc(100%-2.5rem)] overflow-y-auto pr-1 scrollbar-thin">
+            {isLoading ? (
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 2xl:grid-cols-4">
+                {[1, 2, 3, 4, 5, 6].map(
+                  (item) => (
+                    <div
+                      key={item}
+                      className="overflow-hidden rounded-2xl border border-black/10 bg-white"
+                    >
+                      <div className="aspect-[4/3] animate-pulse bg-black/[0.04]" />
 
-                      <div className="h-5 w-40 animate-pulse rounded bg-black/[0.06]" />
+                      <div className="space-y-2 p-3">
+                        <div className="h-2.5 w-16 animate-pulse rounded bg-black/[0.06]" />
 
-                      <div className="h-8 w-full animate-pulse rounded bg-black/[0.04]" />
+                        <div className="h-4 w-28 animate-pulse rounded bg-black/[0.06]" />
+
+                        <div className="h-3 w-full animate-pulse rounded bg-black/[0.04]" />
+                      </div>
                     </div>
-                  </div>
-                ),
-              )}
-            </div>
-          ) : (
-            <ProductGrid
-              products={
-                filteredProducts
-              }
-            />
-          )}
-        </div>
+                  ),
+                )}
+              </div>
+            ) : (
+              <ProductGrid
+                products={
+                  filteredProducts
+                }
+              />
+            )}
+          </div>
+        </section>
       </div>
     </main>
   );

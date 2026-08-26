@@ -18,49 +18,50 @@ import {
 } from "react-router-dom";
 
 import AIProductAnalysis from "../components/AIProductAnalysis";
+import ProductCharacteristicsEditor from "../components/TenantCharacteristicsEditor";
+
 import { analyseProduct } from "../api/aiProduct.api";
 
 import type {
   AIProductAnalysis as AIProductAnalysisResult,
   TenantCharacteristic,
 } from "../types/catalog.types";
-import { useTenant } from "../../../app/providers/TenantProvider";
-import ProductCharacteristicsEditor from "../components/TenantCharacteristicsEditor";
 
+import { useTenant } from "../../../app/providers/TenantProvider";
 
 /* =========================================================
-   CREATE PRODUCT PAGE
-   =========================================================
- *
- * Product creation flow:
- *
- * Tenant defaults
- *       ↓
- * Product characteristics
- *       ↓
- * User customises for this product
- *       ↓
- * Upload images
- *       ↓
- * Generate
- *       ↓
- * AI analyses using FINAL characteristics
- *       ↓
- * Product Review
- * ========================================================= */
+   PAGE
+   ========================================================= */
 
 const CreateProductPage = () => {
   const navigate = useNavigate();
 
-  const tenant = useTenant();
+  const {
+    tenant,
+    catalogSettings,
+  } = useTenant();
+
+  /* =======================================================
+     PRODUCT IMAGES
+     ======================================================= */
 
   const [images, setImages] =
     useState<File[]>([]);
 
-  const [characteristics, setCharacteristics] =
-    useState<TenantCharacteristic[]>(
-      [],
-    );
+  /* =======================================================
+     PRODUCT-SPECIFIC CHARACTERISTICS
+     ======================================================= */
+
+  const [
+    characteristics,
+    setCharacteristics,
+  ] = useState<TenantCharacteristic[]>(
+    [],
+  );
+
+  /* =======================================================
+     AI STATE
+     ======================================================= */
 
   const [isAnalysing, setIsAnalysing] =
     useState(false);
@@ -74,58 +75,28 @@ const CreateProductPage = () => {
     );
 
   /* =======================================================
-     TENANT DEFAULT CHARACTERISTICS
-     =======================================================
-   *
-   * These are copied into local product state.
-   *
-   * We intentionally do NOT mutate the tenant's
-   * configuration while creating a product.
-   *
-   * The product gets its own editable snapshot.
-   * ======================================================= */
+     TENANT CHARACTERISTICS
+     ======================================================= */
 
   const tenantCharacteristics =
-    useMemo<TenantCharacteristic[]>(
-      () => {
-        const catalogSettings = (
-          tenant.tenant as unknown as {
-            catalogSettings?: {
-              characteristics?: TenantCharacteristic[];
-            };
-          } | null | undefined
-        )?.catalogSettings;
-
-        return catalogSettings?.characteristics ?? [];
-      },
-      [tenant.tenant],
-    );
+    catalogSettings.characteristics ??
+    [];
 
   /* =======================================================
-     INITIALISE PRODUCT CHARACTERISTICS
-     =======================================================
-   *
-   * Only initialise once the tenant configuration
-   * becomes available.
-   * ======================================================= */
+     INITIALISE CHARACTERISTICS
+     ======================================================= */
 
   useEffect(() => {
-    if (
-      characteristics.length > 0 ||
-      tenantCharacteristics.length === 0
-    ) {
-      return;
-    }
-
+    /*
+     * Every new product receives a private copy
+     * of the tenant configuration.
+     */
     setCharacteristics(
       cloneCharacteristics(
         tenantCharacteristics,
       ),
     );
-  }, [
-    tenantCharacteristics,
-    characteristics.length,
-  ]);
+  }, [tenantCharacteristics]);
 
   /* =======================================================
      IMAGE PREVIEWS
@@ -135,6 +106,7 @@ const CreateProductPage = () => {
     () =>
       images.map((file) => ({
         file,
+
         url: URL.createObjectURL(file),
       })),
     [images],
@@ -191,7 +163,7 @@ const CreateProductPage = () => {
   };
 
   /* =======================================================
-     GENERATE PRODUCT
+     GENERATE
      ======================================================= */
 
   const handleGenerate = async () => {
@@ -209,16 +181,29 @@ const CreateProductPage = () => {
 
     try {
       /*
-       * The FINAL product-specific characteristics
-       * are sent to AI.
+       * IMPORTANT:
        *
-       * This can differ from the tenant defaults.
+       * AI receives the tenant's actual configured
+       * product schema.
+       *
+       * It does not assume:
+       *
+       * material
+       * colour
+       * finish
+       * size
        */
       const response =
         await analyseProduct({
           images,
 
-          characteristics,
+          tenantId:
+            tenant?.id,
+
+          characteristics:
+            cloneCharacteristics(
+              characteristics,
+            ),
         });
 
       setAnalysis(
@@ -226,8 +211,8 @@ const CreateProductPage = () => {
       );
 
       /*
-       * Create temporary URLs for the review
-       * page.
+       * These URLs are only used while moving
+       * through the client-side review flow.
        */
       const imageUrls =
         images.map((file) =>
@@ -272,7 +257,9 @@ const CreateProductPage = () => {
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-[var(--color-background)]">
       <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
-        {/* HEADER */}
+        {/* =================================================
+            HEADER
+            ================================================= */}
 
         <header>
           <Link
@@ -280,7 +267,6 @@ const CreateProductPage = () => {
             className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition hover:text-[var(--color-primary)]"
           >
             <ArrowLeft size={17} />
-
             Back to Catalog
           </Link>
 
@@ -300,17 +286,21 @@ const CreateProductPage = () => {
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
-              Upload product images and
-              configure the characteristics AI
-              should identify.
+              Upload product images and configure
+              the characteristics AI should identify
+              using this tenant's catalog schema.
             </p>
           </div>
         </header>
 
-        {/* WORKSPACE */}
+        {/* =================================================
+            WORKSPACE
+            ================================================= */}
 
         <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-          {/* LEFT */}
+          {/* =================================================
+              LEFT
+              ================================================= */}
 
           <section className="space-y-6">
             {/* =================================================
@@ -335,9 +325,8 @@ const CreateProductPage = () => {
                   </h2>
 
                   <p className="mt-1 text-xs leading-5 text-gray-500">
-                    Upload clear images showing
-                    the product from different
-                    angles.
+                    Upload clear images showing the
+                    product from different angles.
                   </p>
                 </div>
 
@@ -406,7 +395,9 @@ const CreateProductPage = () => {
                           src={
                             preview.url
                           }
-                          alt={`Product image ${index + 1}`}
+                          alt={`Product image ${
+                            index + 1
+                          }`}
                           className="h-full w-full object-cover"
                         />
 
@@ -418,7 +409,9 @@ const CreateProductPage = () => {
                             )
                           }
                           className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white/90 text-gray-500 opacity-0 shadow-sm backdrop-blur transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-500"
-                          aria-label={`Remove image ${index + 1}`}
+                          aria-label={`Remove image ${
+                            index + 1
+                          }`}
                         >
                           <Trash2
                             size={15}
@@ -451,8 +444,7 @@ const CreateProductPage = () => {
             {error && (
               <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
                 <p className="text-sm font-semibold text-red-700">
-                  Unable to generate
-                  product
+                  Unable to generate product
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-red-600">
@@ -542,10 +534,9 @@ const CreateProductPage = () => {
                 </div>
 
                 <p className="mt-5 text-sm leading-6 text-gray-500">
-                  Upload your product
-                  images and configure
-                  the characteristics AI
-                  should analyse.
+                  Upload product images and
+                  configure the characteristics
+                  AI should analyse.
                 </p>
 
                 <div className="mt-5 border-t border-black/[0.06] pt-5">
@@ -597,10 +588,11 @@ const CreateProductPage = () => {
                     </div>
                   ) : (
                     <p className="mt-3 text-xs leading-5 text-gray-400">
-                      No characteristics
-                      configured. Add one
-                      to give AI a schema
-                      for this product.
+                      No characteristics are
+                      configured. AI will analyse
+                      general product information,
+                      but tenant-specific attributes
+                      will not be available.
                     </p>
                   )}
                 </div>
@@ -614,23 +606,17 @@ const CreateProductPage = () => {
 };
 
 /* =========================================================
-   CLONE TENANT CHARACTERISTICS
-   =========================================================
- *
- * VERY IMPORTANT:
- *
- * We do not put tenant objects directly into product
- * state.
- *
- * We clone them so editing a product does not mutate
- * the tenant's global configuration.
- * ========================================================= */
+   CLONE CHARACTERISTICS
+   ========================================================= */
 
 const cloneCharacteristics = (
   characteristics: TenantCharacteristic[],
 ): TenantCharacteristic[] =>
   characteristics.map(
-    (characteristic, index) => ({
+    (
+      characteristic,
+      index,
+    ) => ({
       ...characteristic,
 
       sequence:
@@ -638,7 +624,7 @@ const cloneCharacteristics = (
         index,
 
       values:
-        characteristic.values.map(
+        characteristic.values?.map(
           (value) => ({
             ...value,
 
@@ -647,7 +633,7 @@ const cloneCharacteristics = (
                 ? [...value.images]
                 : undefined,
           }),
-        ),
+        ) ?? [],
     }),
   );
 
