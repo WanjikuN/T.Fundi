@@ -2,7 +2,6 @@ import {
   BookOpen,
   ChevronRight,
   Palette,
-  Settings2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 

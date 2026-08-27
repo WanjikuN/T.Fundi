@@ -10,6 +10,7 @@ export const mockProducts: Product[] = [
     category: "sofas",
     price: 85000,
     currency: "KES",
+    quantity: 10,
 
     imageUrl: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc",
 
@@ -112,6 +113,7 @@ export const mockProducts: Product[] = [
     category: "chairs",
     price: 38000,
     currency: "KES",
+    quantity: 10,
 
     imageUrl: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c",
 
@@ -201,6 +203,7 @@ export const mockProducts: Product[] = [
     category: "tables",
     price: 72000,
     currency: "KES",
+    quantity: 10,
 
     imageUrl: "https://images.unsplash.com/photo-1615529162924-f8605388461d",
 
@@ -271,6 +274,7 @@ export const mockProducts: Product[] = [
     category: "beds",
     price: 95000,
     currency: "KES",
+    quantity: 10,
 
     imageUrl: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85",
 
@@ -333,6 +337,7 @@ export const mockProducts: Product[] = [
     category: "storage",
     price: 64000,
     currency: "KES",
+    quantity: 10,
 
     imageUrl: "https://images.unsplash.com/photo-1558997519-83ea9252edf8",
 
@@ -394,6 +399,7 @@ export const mockProducts: Product[] = [
     category: "outdoor",
     price: 24000,
     currency: "KES",
+    quantity: 10,
 
     imageUrl: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0",
 
