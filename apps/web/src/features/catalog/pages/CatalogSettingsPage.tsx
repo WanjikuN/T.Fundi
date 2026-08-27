@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import {
+  ArrowLeft,
   Check,
   ChevronDown,
   RotateCcw,
@@ -65,8 +67,10 @@ const CatalogSettingsPage = () => {
   const [showCategories, setShowCategories] =
     useState(true);
 
-  const [showCharacteristics, setShowCharacteristics] =
-    useState(true);
+  const [
+    showCharacteristics,
+    setShowCharacteristics,
+  ] = useState(true);
 
   const [showRules, setShowRules] =
     useState(true);
@@ -88,6 +92,13 @@ const CatalogSettingsPage = () => {
      ======================================================= */
 
   const handleSave = async () => {
+    if (
+      !hasUnsavedCatalogChanges ||
+      isSavingCatalog
+    ) {
+      return;
+    }
+
     try {
       await saveCatalogSettings();
 
@@ -99,6 +110,11 @@ const CatalogSettingsPage = () => {
         },
       );
     } catch (error) {
+      console.error(
+        "Failed to save catalog settings:",
+        error,
+      );
+
       toast.error(
         "Unable to save catalog settings.",
         {
@@ -116,7 +132,10 @@ const CatalogSettingsPage = () => {
      ======================================================= */
 
   const handleReset = () => {
-    if (!hasUnsavedCatalogChanges) {
+    if (
+      !hasUnsavedCatalogChanges ||
+      isSavingCatalog
+    ) {
       return;
     }
 
@@ -134,12 +153,15 @@ const CatalogSettingsPage = () => {
   const handleCurrencyChange = (
     value: string,
   ) => {
-    updateCatalogSetting(
-      "defaultCurrency",
+    const normalized =
       value
         .replace(/[^a-zA-Z]/g, "")
         .slice(0, 3)
-        .toUpperCase(),
+        .toUpperCase();
+
+    updateCatalogSetting(
+      "defaultCurrency",
+      normalized,
     );
   };
 
@@ -156,15 +178,16 @@ const CatalogSettingsPage = () => {
             ================================================= */}
 
         <header className="shrink-0">
-          <p
-            className="text-[10px] font-bold uppercase tracking-[0.2em]"
-            style={{
-              color:
-                "var(--color-primary)",
-            }}
-          >
-            Catalog configuration
-          </p>
+          <div className="mb-4">
+            <Link
+              to="/settings"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)]"
+            >
+              <ArrowLeft size={16} />
+
+              Settings
+            </Link>
+          </div>
 
           <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -200,7 +223,6 @@ const CatalogSettingsPage = () => {
                 ================================================= */}
 
             <section className="rounded-3xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
-
               <button
                 type="button"
                 onClick={() =>
@@ -329,7 +351,6 @@ const CatalogSettingsPage = () => {
                 ================================================= */}
 
             <section className="rounded-3xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
-
               <button
                 type="button"
                 onClick={() =>
@@ -356,8 +377,9 @@ const CatalogSettingsPage = () => {
                   </h2>
 
                   <p className="mt-1 text-xs leading-5 text-gray-500">
-                    Define what this tenant wants to
-                    capture about its products.
+                    Define exactly what this tenant
+                    wants to capture about its
+                    products.
                   </p>
                 </div>
 
@@ -373,7 +395,6 @@ const CatalogSettingsPage = () => {
 
               {showCharacteristics && (
                 <div className="mt-5">
-
                   <TenantCharacteristicsEditor
                     characteristics={
                       characteristics
@@ -413,7 +434,6 @@ const CatalogSettingsPage = () => {
                       />
                     </label>
                   </div>
-
                 </div>
               )}
             </section>
@@ -423,7 +443,6 @@ const CatalogSettingsPage = () => {
                 ================================================= */}
 
             <section className="rounded-3xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
-
               <button
                 type="button"
                 onClick={() =>
@@ -499,7 +518,6 @@ const CatalogSettingsPage = () => {
                   />
 
                   <div className="rounded-xl border border-black/10 p-4">
-
                     <label className="text-sm font-semibold text-gray-800">
                       Default currency
                     </label>
@@ -523,13 +541,10 @@ const CatalogSettingsPage = () => {
                       className="mt-3 h-10 w-full rounded-lg border border-black/10 px-3 text-sm font-semibold uppercase outline-none focus:border-[var(--color-primary)]"
                       placeholder="KES"
                     />
-
                   </div>
-
                 </div>
               )}
             </section>
-
           </div>
         </div>
 
@@ -538,16 +553,13 @@ const CatalogSettingsPage = () => {
             ================================================= */}
 
         <footer className="shrink-0 border-t border-black/10 bg-[var(--color-background)] pt-3">
-
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
             <p className="text-xs text-gray-400">
               These settings apply to this tenant's
               catalog and AI product workflow.
             </p>
 
             <div className="flex items-center gap-2">
-
               <button
                 type="button"
                 onClick={handleReset}
@@ -581,11 +593,9 @@ const CatalogSettingsPage = () => {
                   ? "Saving..."
                   : "Save Catalog Settings"}
               </button>
-
             </div>
           </div>
         </footer>
-
       </div>
     </main>
   );
@@ -614,7 +624,6 @@ const RuleToggle = ({
   onChange,
 }: RuleToggleProps) => (
   <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-black/10 p-4 transition hover:bg-black/[0.01]">
-
     <div>
       <p className="text-sm font-semibold text-gray-800">
         {label}
@@ -635,7 +644,6 @@ const RuleToggle = ({
       }
       className="mt-1 h-4 w-4 accent-[var(--color-primary)]"
     />
-
   </label>
 );
 

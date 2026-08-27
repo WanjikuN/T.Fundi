@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ChangeEvent, ReactNode } from "react";
 
@@ -26,17 +21,11 @@ import {
   X,
 } from "lucide-react";
 
-import {
-  Link,
-  useParams,
-} from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import { toast } from "sonner";
 
-import {
-  getProductBySlug,
-  updateProduct,
-} from "../api/products.api";
+import { getProductBySlug, updateProduct } from "../api/products.api";
 
 import type {
   Product,
@@ -53,8 +42,7 @@ import type {
    CONSTANTS
    ========================================================= */
 
-const CATALOG_SETTINGS_KEY =
-  "tfundi-catalog-settings";
+const CATALOG_SETTINGS_KEY = "tfundi-catalog-settings";
 
 const PRODUCT_CATEGORIES: {
   value: ProductCategory;
@@ -75,34 +63,23 @@ const PRODUCT_CATEGORIES: {
    HELPERS
    ========================================================= */
 
-const createId = () =>
-  `${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}`;
+const createId = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-const getCatalogSettings =
-  (): TenantCatalogSettings | null => {
-    try {
-      const stored =
-        localStorage.getItem(
-          CATALOG_SETTINGS_KEY,
-        );
+const getCatalogSettings = (): TenantCatalogSettings | null => {
+  try {
+    const stored = localStorage.getItem(CATALOG_SETTINGS_KEY);
 
-      if (!stored) {
-        return null;
-      }
-
-      return JSON.parse(
-        stored,
-      ) as TenantCatalogSettings;
-    } catch {
+    if (!stored) {
       return null;
     }
-  };
 
-const fileToDataUrl = (
-  file: File,
-): Promise<string> =>
+    return JSON.parse(stored) as TenantCatalogSettings;
+  } catch {
+    return null;
+  }
+};
+
+const fileToDataUrl = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -111,19 +88,13 @@ const fileToDataUrl = (
     };
 
     reader.onerror = () => {
-      reject(
-        new Error(
-          `Unable to read ${file.name}.`,
-        ),
-      );
+      reject(new Error(`Unable to read ${file.name}.`));
     };
 
     reader.readAsDataURL(file);
   });
 
-const getStatusLabel = (
-  status: ProductStatus,
-) => {
+const getStatusLabel = (status: ProductStatus) => {
   if (status === "active") {
     return "Published";
   }
@@ -136,123 +107,127 @@ const getStatusLabel = (
 };
 
 /* =========================================================
+   CREATE PRODUCT OPTION FROM TENANT CHARACTERISTIC
+   ========================================================= */
+
+const createProductOption = (
+  characteristic: TenantCharacteristic,
+): ProductOption => {
+  const values: ProductOptionValue[] = characteristic.values.map((value) => ({
+    id: value.id,
+    name: value.name,
+    description: value.description,
+    hexCode: value.hexCode,
+    imageUrl: value.imageUrl,
+    images: value.images,
+    active: value.active,
+  }));
+
+  return {
+    id: createId(),
+
+    characteristicId: characteristic.id,
+
+    name: characteristic.name,
+
+    type: characteristic.type,
+
+    required: characteristic.required ?? false,
+
+    values,
+
+    value:
+      characteristic.type === "text" ||
+      characteristic.type === "number" ||
+      characteristic.type === "image"
+        ? ""
+        : undefined,
+  };
+};
+
+/* =========================================================
    PAGE
    ========================================================= */
 
 const ProductDetailsPage = () => {
   const { slug } = useParams();
 
-  const [product, setProduct] =
-    useState<Product | null>(null);
+  const [product, setProduct] = useState<Product | null>(null);
 
-  const [isLoading, setIsLoading] =
-    useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [isSaving, setIsSaving] =
-    useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [productName, setProductName] =
-    useState("");
+  /* PRODUCT */
 
-  const [description, setDescription] =
-    useState("");
+  const [productName, setProductName] = useState("");
 
-  const [category, setCategory] =
-    useState<ProductCategory>("other");
+  const [description, setDescription] = useState("");
 
-  const [price, setPrice] =
-    useState("");
+  const [category, setCategory] = useState<ProductCategory>("other");
 
-  const [currency, setCurrency] =
-    useState("KES");
+  const [price, setPrice] = useState("");
 
-  const [quantity, setQuantity] =
-    useState("0");
+  const [currency, setCurrency] = useState("KES");
 
-  const [width, setWidth] =
-    useState("");
+  const [quantity, setQuantity] = useState("0");
 
-  const [depth, setDepth] =
-    useState("");
+  /* DIMENSIONS */
 
-  const [height, setHeight] =
-    useState("");
+  const [width, setWidth] = useState("");
 
-  const [unit, setUnit] =
-    useState<"cm" | "mm" | "in">("cm");
+  const [depth, setDepth] = useState("");
 
-  const [status, setStatus] =
-    useState<ProductStatus>("draft");
+  const [height, setHeight] = useState("");
 
-  const [images, setImages] =
-    useState<ProductImage[]>([]);
+  const [unit, setUnit] = useState<"cm" | "mm" | "in">("cm");
 
-  const [options, setOptions] =
-    useState<ProductOption[]>([]);
+  /* STATUS */
 
-  const [
-    selectedImageIndex,
-    setSelectedImageIndex,
-  ] = useState(0);
+  const [status, setStatus] = useState<ProductStatus>("draft");
 
-  const [
-    showCharacteristics,
-    setShowCharacteristics,
-  ] = useState(true);
+  /* MEDIA */
 
-  const [
-    showDimensions,
-    setShowDimensions,
-  ] = useState(false);
+  const [images, setImages] = useState<ProductImage[]>([]);
 
-  const [show360, setShow360] =
-    useState(true);
+  /* PRODUCT CHARACTERISTICS */
 
-  const [show3D, setShow3D] =
-    useState(true);
+  const [options, setOptions] = useState<ProductOption[]>([]);
 
-  const [
-    isAddingCharacteristic,
-    setIsAddingCharacteristic,
-  ] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  const [
-    selectedCharacteristicId,
-    setSelectedCharacteristicId,
-  ] = useState("");
+  /* UI */
 
-  const [
-    rotationIndex,
-    setRotationIndex,
-  ] = useState(0);
+  const [showCharacteristics, setShowCharacteristics] = useState(true);
 
-  const [
-    isAutoRotating,
-    setIsAutoRotating,
-  ] = useState(false);
+  const [showDimensions, setShowDimensions] = useState(false);
 
-  const [
-    catalogSettings,
-    setCatalogSettings,
-  ] =
-    useState<TenantCatalogSettings | null>(
-      null,
-    );
+  const [show360, setShow360] = useState(true);
 
-  const imageInputRef =
-    useRef<HTMLInputElement | null>(
-      null,
-    );
+  const [show3D, setShow3D] = useState(true);
 
-  const frameInputRef =
-    useRef<HTMLInputElement | null>(
-      null,
-    );
+  const [isAddingCharacteristic, setIsAddingCharacteristic] = useState(false);
 
-  const modelInputRef =
-    useRef<HTMLInputElement | null>(
-      null,
-    );
+  const [selectedCharacteristicId, setSelectedCharacteristicId] = useState("");
+
+  /* 360 */
+
+  const [rotationIndex, setRotationIndex] = useState(0);
+
+  const [isAutoRotating, setIsAutoRotating] = useState(false);
+
+  /* TENANT SETTINGS */
+
+  const [catalogSettings, setCatalogSettings] =
+    useState<TenantCatalogSettings | null>(null);
+
+  /* REFS */
+
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+
+  const frameInputRef = useRef<HTMLInputElement | null>(null);
+
+  const modelInputRef = useRef<HTMLInputElement | null>(null);
 
   /* =======================================================
      LOAD CATALOG SETTINGS
@@ -260,9 +235,7 @@ const ProductDetailsPage = () => {
 
   useEffect(() => {
     const loadSettings = () => {
-      setCatalogSettings(
-        getCatalogSettings(),
-      );
+      setCatalogSettings(getCatalogSettings());
     };
 
     loadSettings();
@@ -271,26 +244,12 @@ const ProductDetailsPage = () => {
       loadSettings();
     };
 
-    window.addEventListener(
-      "storage",
-      handleStorage,
-    );
+    window.addEventListener("storage", handleStorage);
 
-    /*
-     * Allows Settings → Catalog Settings
-     * to tell this page that tenant settings
-     * changed while both are open in the app.
-     */
-    window.addEventListener(
-      "tfundi-catalog-settings-updated",
-      handleStorage,
-    );
+    window.addEventListener("tfundi-catalog-settings-updated", handleStorage);
 
     return () => {
-      window.removeEventListener(
-        "storage",
-        handleStorage,
-      );
+      window.removeEventListener("storage", handleStorage);
 
       window.removeEventListener(
         "tfundi-catalog-settings-updated",
@@ -316,17 +275,14 @@ const ProductDetailsPage = () => {
       }
 
       try {
-        const result =
-          await getProductBySlug(slug);
+        const result = await getProductBySlug(slug);
 
         if (!mounted) {
           return;
         }
 
         if (!result) {
-          toast.error(
-            "Product could not be found.",
-          );
+          toast.error("Product could not be found.");
 
           setProduct(null);
           setIsLoading(false);
@@ -337,121 +293,98 @@ const ProductDetailsPage = () => {
         setProduct(result);
 
         setProductName(result.name);
-        setDescription(
-          result.description ?? "",
-        );
-        setCategory(
-          result.category,
-        );
 
-        setPrice(
-          String(result.price ?? ""),
-        );
+        setDescription(result.description ?? "");
 
-        setCurrency(
-          result.currency ?? "KES",
-        );
+        setCategory(result.category);
 
-        setQuantity(
-          String(
-            result.quantity ?? 0,
-          ),
-        );
+        setPrice(String(result.price ?? ""));
+
+        setCurrency(result.currency ?? "KES");
+
+        setQuantity(String(result.quantity ?? 0));
 
         setWidth(
-          result.dimensions?.width !==
-            undefined
-            ? String(
-                result.dimensions.width,
-              )
+          result.dimensions?.width !== undefined
+            ? String(result.dimensions.width)
             : "",
         );
 
         setDepth(
-          result.dimensions?.depth !==
-            undefined
-            ? String(
-                result.dimensions.depth,
-              )
+          result.dimensions?.depth !== undefined
+            ? String(result.dimensions.depth)
             : "",
         );
 
         setHeight(
-          result.dimensions?.height !==
-            undefined
-            ? String(
-                result.dimensions.height,
-              )
+          result.dimensions?.height !== undefined
+            ? String(result.dimensions.height)
             : "",
         );
 
-        setUnit(
-          result.dimensions?.unit ??
-            "cm",
-        );
+        setUnit(result.dimensions?.unit ?? "cm");
 
         setStatus(result.status);
 
+        /* ---------------------------------------------------
+           IMAGES
+        --------------------------------------------------- */
+
         const productImages: ProductImage[] =
-          result.images?.map(
-            (url, index) => ({
-              id: createId(),
-              url,
-              sequence: index,
-              alt: `${result.name} image ${
-                index + 1
-              }`,
-              is360Frame: false,
-            }),
-          ) ?? [];
+          result.images?.map((url, index) => ({
+            id: createId(),
+            url,
+            sequence: index,
+            alt: `${result.name} image ${index + 1}`,
+            is360Frame: false,
+          })) ?? [];
 
         const structuredImages =
           result.media
-            ?.filter(
-              (media) =>
-                media.type === "image",
-            )
-            .map(
-              (media, index) => ({
-                id: media.id,
-                url: media.url,
-                sequence:
-                  media.sequence ??
-                  index,
-                alt:
-                  media.label ??
-                  `${result.name} image ${
-                    index + 1
-                  }`,
-                is360Frame: false,
-              }),
-            ) ?? [];
+            ?.filter((media) => media.type === "image")
+            .map((media, index) => ({
+              id: media.id,
+              url: media.url,
+              sequence: media.sequence ?? index,
+              alt: media.label ?? `${result.name} image ${index + 1}`,
+              is360Frame: false,
+            })) ?? [];
 
-        const combinedImages =
-          structuredImages.length
-            ? structuredImages
-            : productImages;
+        const combinedImages = structuredImages.length
+          ? structuredImages
+          : productImages;
 
         setImages(
-          combinedImages.sort(
-            (a, b) =>
-              (a.sequence ?? 0) -
-              (b.sequence ?? 0),
-          ),
+          combinedImages.sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0)),
         );
+
+        /* ---------------------------------------------------
+           CHARACTERISTICS / OPTIONS
+        --------------------------------------------------- */
 
         setOptions(
-          result.options ?? [],
+          (result.options ?? []).map((option) => {
+            const characteristic = tenantCharacteristics.find(
+              (item) => item.id === option.characteristicId,
+            );
+
+            if (!characteristic) {
+              return option;
+            }
+
+            return {
+              ...option,
+              name: characteristic.name,
+              type: characteristic.type,
+              required: characteristic.required ?? false,
+              values: characteristic.values,
+            };
+          }),
         );
       } catch (error) {
-        console.error(
-          "Failed to load product:",
-          error,
-        );
+        console.error("Failed to load product:", error);
 
-        toast.error(
-          "Unable to load the product.",
-        );
+        toast.error("Unable to load the product.");
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -467,75 +400,95 @@ const ProductDetailsPage = () => {
   }, [slug]);
 
   /* =======================================================
-     TENANT CHARACTERISTICS
+     ACTIVE TENANT CHARACTERISTICS
+     ======================================================= */
+  console.log(catalogSettings);
+  const tenantCharacteristics = useMemo<TenantCharacteristic[]>(
+    () =>
+      catalogSettings?.characteristics?.filter(
+        (characteristic) => characteristic.active !== false,
+      ) ?? [],
+    [catalogSettings],
+  );
+
+  /* =======================================================
+     AVAILABLE CHARACTERISTICS
      ======================================================= */
 
-  const tenantCharacteristics =
-    useMemo<TenantCharacteristic[]>(
-      () =>
-        catalogSettings?.characteristics?.filter(
-          (characteristic) =>
-            characteristic.active !== false,
-        ) ?? [],
-      [catalogSettings],
-    );
+  const availableCharacteristics = useMemo(
+    () =>
+      tenantCharacteristics.filter(
+        (characteristic) =>
+          !options.some(
+            (option) => option.characteristicId === characteristic.id,
+          ),
+      ),
+    [tenantCharacteristics, options],
+  );
+  /* =======================================================
+   RESOLVE PRODUCT OPTIONS FROM CURRENT TENANT SCHEMA
+   ======================================================= */
 
-  const availableCharacteristics =
-    useMemo(
-      () =>
-        tenantCharacteristics.filter(
-          (characteristic) =>
-            !options.some(
-              (option) =>
-                option.characteristicId ===
-                characteristic.id,
-            ),
-        ),
-      [
-        tenantCharacteristics,
-        options,
-      ],
-    );
+  const resolvedOptions = useMemo<ProductOption[]>(() => {
+    return options.map((option) => {
+      const characteristic = tenantCharacteristics.find(
+        (item) => item.id === option.characteristicId,
+      );
 
+      /*
+       * If the characteristic no longer exists
+       * in the tenant schema, preserve the product
+       * option so it can still be reviewed/removed.
+       */
+      if (!characteristic) {
+        return option;
+      }
+
+      return {
+        ...option,
+
+        /*
+         * Tenant owns the characteristic definition.
+         */
+        name: characteristic.name,
+        type: characteristic.type,
+        required: characteristic.required ?? false,
+
+        /*
+         * Tenant owns the available values.
+         */
+        values: characteristic.values.map((value) => ({
+          id: value.id,
+          name: value.name,
+          description: value.description,
+          hexCode: value.hexCode,
+          imageUrl: value.imageUrl,
+          images: value.images,
+          active: value.active,
+        })),
+      };
+    });
+  }, [options, tenantCharacteristics]);
   /* =======================================================
      360 FRAMES
      ======================================================= */
 
-  const rotationFrames =
-    useMemo(
-      () =>
-        images
-          .filter(
-            (image) =>
-              image.is360Frame === true,
-          )
-          .sort(
-            (a, b) =>
-              (a.sequence ?? 0) -
-              (b.sequence ?? 0),
-          ),
-      [images],
-    );
+  const rotationFrames = useMemo(
+    () =>
+      images
+        .filter((image) => image.is360Frame === true)
+        .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0)),
+    [images],
+  );
 
-  const normalImages =
-    useMemo(
-      () =>
-        images.filter(
-          (image) =>
-            image.is360Frame !== true,
-        ),
-      [images],
-    );
+  const normalImages = useMemo(
+    () => images.filter((image) => image.is360Frame !== true),
+    [images],
+  );
 
   const currentRotationFrame =
     rotationFrames[
-      Math.min(
-        rotationIndex,
-        Math.max(
-          rotationFrames.length - 1,
-          0,
-        ),
-      )
+      Math.min(rotationIndex, Math.max(rotationFrames.length - 1, 0))
     ];
 
   /* =======================================================
@@ -543,83 +496,50 @@ const ProductDetailsPage = () => {
      ======================================================= */
 
   useEffect(() => {
-    if (
-      !isAutoRotating ||
-      rotationFrames.length < 2
-    ) {
+    if (!isAutoRotating || rotationFrames.length < 2) {
       return;
     }
 
-    const interval =
-      window.setInterval(() => {
-        setRotationIndex(
-          (current) =>
-            (current + 1) %
-            rotationFrames.length,
-        );
-      }, 120);
+    const interval = window.setInterval(() => {
+      setRotationIndex((current) => (current + 1) % rotationFrames.length);
+    }, 120);
 
     return () => {
       window.clearInterval(interval);
     };
-  }, [
-    isAutoRotating,
-    rotationFrames.length,
-  ]);
+  }, [isAutoRotating, rotationFrames.length]);
 
   /* =======================================================
      IMAGE UPLOAD
      ======================================================= */
 
-  const handleImageUpload = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
-    const files = Array.from(
-      event.target.files ?? [],
-    );
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
 
     if (!files.length) {
       return;
     }
 
     try {
-      const uploaded =
-        await Promise.all(
-          files.map(
-            async (file, index) => ({
-              id: createId(),
-              url: await fileToDataUrl(
-                file,
-              ),
-              sequence:
-                images.length + index,
-              alt: file.name,
-              is360Frame: false,
-            }),
-          ),
-        );
+      const uploaded = await Promise.all(
+        files.map(async (file, index) => ({
+          id: createId(),
+          url: await fileToDataUrl(file),
+          sequence: images.length + index,
+          alt: file.name,
+          is360Frame: false,
+        })),
+      );
 
-      setImages((current) => [
-        ...current,
-        ...uploaded,
-      ]);
+      setImages((current) => [...current, ...uploaded]);
 
       toast.success(
-        `${files.length} image${
-          files.length === 1
-            ? ""
-            : "s"
-        } added.`,
+        `${files.length} image${files.length === 1 ? "" : "s"} added.`,
       );
     } catch (error) {
-      console.error(
-        "Image upload failed:",
-        error,
-      );
+      console.error("Image upload failed:", error);
 
-      toast.error(
-        "Unable to add the image.",
-      );
+      toast.error("Unable to add the image.");
     } finally {
       event.target.value = "";
     }
@@ -629,63 +549,41 @@ const ProductDetailsPage = () => {
      360 FRAME UPLOAD
      ======================================================= */
 
-  const handle360Upload = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
-    const files = Array.from(
-      event.target.files ?? [],
-    );
+  const handle360Upload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
 
     if (!files.length) {
       return;
     }
 
     try {
-      const uploaded =
-        await Promise.all(
-          files.map(
-            async (file) => ({
-              id: createId(),
-              url: await fileToDataUrl(
-                file,
-              ),
-              sequence:
-                images.length,
-              alt: file.name,
-              is360Frame: true,
-            }),
-          ),
-        );
+      const uploaded = await Promise.all(
+        files.map(async (file) => ({
+          id: createId(),
+          url: await fileToDataUrl(file),
+          sequence: images.length,
+          alt: file.name,
+          is360Frame: true,
+        })),
+      );
 
       setImages((current) => [
         ...current,
-        ...uploaded.map(
-          (image, index) => ({
-            ...image,
-            sequence:
-              current.length + index,
-          }),
-        ),
+        ...uploaded.map((image, index) => ({
+          ...image,
+          sequence: current.length + index,
+        })),
       ]);
 
       setRotationIndex(0);
 
       toast.success(
-        `${files.length} 360° frame${
-          files.length === 1
-            ? ""
-            : "s"
-        } added.`,
+        `${files.length} 360° frame${files.length === 1 ? "" : "s"} added.`,
       );
     } catch (error) {
-      console.error(
-        "360 upload failed:",
-        error,
-      );
+      console.error("360 upload failed:", error);
 
-      toast.error(
-        "Unable to add the 360° frames.",
-      );
+      toast.error("Unable to add the 360° frames.");
     } finally {
       event.target.value = "";
     }
@@ -695,165 +593,99 @@ const ProductDetailsPage = () => {
      REMOVE IMAGE
      ======================================================= */
 
-  const handleRemoveImage = (
-    imageId: string,
-  ) => {
+  const handleRemoveImage = (imageId: string) => {
     setImages((current) =>
       current
-        .filter(
-          (image) =>
-            image.id !== imageId,
-        )
-        .map(
-          (image, index) => ({
-            ...image,
-            sequence: index,
-          }),
-        ),
+        .filter((image) => image.id !== imageId)
+        .map((image, index) => ({
+          ...image,
+          sequence: index,
+        })),
     );
 
     setSelectedImageIndex(0);
+
     setRotationIndex(0);
 
-    toast.success(
-      "Image removed.",
-    );
+    toast.success("Image removed.");
   };
 
   /* =======================================================
-     CHARACTERISTIC HANDLERS
+     ADD CHARACTERISTIC
      ======================================================= */
 
   const handleAddCharacteristic = () => {
     if (!selectedCharacteristicId) {
-      toast.error(
-        "Choose a characteristic first.",
-      );
+      toast.error("Choose a characteristic first.");
 
       return;
     }
 
-    const characteristic =
-      tenantCharacteristics.find(
-        (item) =>
-          item.id ===
-          selectedCharacteristicId,
-      );
+    const characteristic = tenantCharacteristics.find(
+      (item) => item.id === selectedCharacteristicId,
+    );
 
     if (!characteristic) {
+      toast.error("Characteristic could not be found.");
+
+      return;
+    }
+
+    const alreadyAttached = options.some(
+      (option) => option.characteristicId === characteristic.id,
+    );
+
+    if (alreadyAttached) {
       toast.error(
-        "Characteristic could not be found.",
+        `${characteristic.name} is already attached to this product.`,
       );
 
       return;
     }
 
-    const newOption: ProductOption = {
-      id: createId(),
+    const newOption = createProductOption(characteristic);
 
-      characteristicId:
-        characteristic.id,
+    setOptions((current) => [...current, newOption]);
 
-      name:
-        characteristic.name,
+    setSelectedCharacteristicId("");
 
-      type:
-        characteristic.type,
+    setIsAddingCharacteristic(false);
 
-      required:
-        characteristic.required,
-
-      values:
-        characteristic.values.map(
-          (value) => ({
-            id: value.id,
-            name: value.name,
-            description:
-              value.description,
-            hexCode:
-              value.hexCode,
-            imageUrl:
-              value.imageUrl,
-            images:
-              value.images,
-            active:
-              value.active,
-          }),
-        ),
-
-      value:
-        characteristic.type ===
-          "text" ||
-        characteristic.type ===
-          "number"
-          ? ""
-          : undefined,
-    };
-
-    setOptions((current) => [
-      ...current,
-      newOption,
-    ]);
-
-    setSelectedCharacteristicId(
-      "",
-    );
-
-    setIsAddingCharacteristic(
-      false,
-    );
-
-    toast.success(
-      `${characteristic.name} added.`,
-    );
+    toast.success(`${characteristic.name} added.`);
   };
 
-  const handleRemoveCharacteristic = (
-    optionId: string,
-  ) => {
+  /* =======================================================
+     REMOVE CHARACTERISTIC
+     ======================================================= */
+
+  const handleRemoveCharacteristic = (optionId: string) => {
+    setOptions((current) => current.filter((option) => option.id !== optionId));
+
+    toast.success("Characteristic removed.");
+  };
+
+  /* =======================================================
+     FREE-FORM CHARACTERISTIC VALUE
+     ======================================================= */
+
+  const handleCharacteristicValueChange = (optionId: string, value: string) => {
     setOptions((current) =>
-      current.filter(
-        (option) =>
-          option.id !== optionId,
+      current.map((option) =>
+        option.id === optionId
+          ? {
+              ...option,
+              value,
+            }
+          : option,
       ),
     );
-
-    toast.success(
-      "Characteristic removed.",
-    );
   };
 
-  const handleCharacteristicValueChange = (
-    optionId: string,
-    value: string,
-  ) => {
-    setOptions((current) =>
-      current.map((option) => {
-        if (
-          option.id !== optionId
-        ) {
-          return option;
-        }
-
-        if (
-          option.type === "text" ||
-          option.type === "number"
-        ) {
-          return {
-            ...option,
-            value,
-          };
-        }
-
-        return option;
-      }),
-    );
-  };
-
-  const handleSelectableValueChange = (
-    optionId: string,
-    valueId: string,
-  ) => {
+  /* =======================================================
+     SELECT CHARACTERISTIC VALUE
+     ======================================================= */
+  console.log(tenantCharacteristics);
+  const handleSelectableValueChange = (optionId: string, valueId: string) => {
     setOptions((current) =>
       current.map((option) =>
         option.id === optionId
@@ -867,29 +699,37 @@ const ProductDetailsPage = () => {
   };
 
   /* =======================================================
+     IMAGE CHARACTERISTIC
+     ======================================================= */
+
+  const handleImageCharacteristicChange = (optionId: string, value: string) => {
+    setOptions((current) =>
+      current.map((option) =>
+        option.id === optionId
+          ? {
+              ...option,
+              value,
+            }
+          : option,
+      ),
+    );
+  };
+
+  /* =======================================================
      3D MODEL
      ======================================================= */
 
-  const handle3DModelUpload = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file =
-      event.target.files?.[0];
+  const handle3DModelUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
 
     if (!file) {
       return;
     }
 
-    const filename =
-      file.name.toLowerCase();
+    const filename = file.name.toLowerCase();
 
-    if (
-      !filename.endsWith(".glb") &&
-      !filename.endsWith(".gltf")
-    ) {
-      toast.error(
-        "Please upload a GLB or GLTF model.",
-      );
+    if (!filename.endsWith(".glb") && !filename.endsWith(".gltf")) {
+      toast.error("Please upload a GLB or GLTF model.");
 
       event.target.value = "";
 
@@ -897,8 +737,7 @@ const ProductDetailsPage = () => {
     }
 
     try {
-      const dataUrl =
-        await fileToDataUrl(file);
+      const dataUrl = await fileToDataUrl(file);
 
       setProduct((current) =>
         current
@@ -909,22 +748,19 @@ const ProductDetailsPage = () => {
           : current,
       );
 
-      toast.success(
-        "3D model added.",
-      );
+      toast.success("3D model added.");
     } catch (error) {
-      console.error(
-        "3D model upload failed:",
-        error,
-      );
+      console.error("3D model upload failed:", error);
 
-      toast.error(
-        "Unable to add the 3D model.",
-      );
+      toast.error("Unable to add the 3D model.");
     } finally {
       event.target.value = "";
     }
   };
+
+  /* =======================================================
+     REMOVE 3D MODEL
+     ======================================================= */
 
   const handleRemove3DModel = () => {
     setProduct((current) =>
@@ -936,87 +772,58 @@ const ProductDetailsPage = () => {
         : current,
     );
 
-    toast.success(
-      "3D model removed.",
-    );
+    toast.success("3D model removed.");
   };
 
   /* =======================================================
-     BUILD IMAGES
+     BUILD PRODUCT IMAGES
      ======================================================= */
 
-  const buildProductImages =
-    (): ProductImage[] =>
-      images.map(
-        (image, index) => ({
-          ...image,
-          sequence: index,
-        }),
-      );
+  const buildProductImages = (): ProductImage[] =>
+    images.map((image, index) => ({
+      ...image,
+      sequence: index,
+    }));
 
   /* =======================================================
      SAVE
      ======================================================= */
 
-  const handleSave = async (
-    nextStatus?: ProductStatus,
-  ) => {
+  const handleSave = async (nextStatus?: ProductStatus) => {
     if (!product) {
       return;
     }
 
     if (!productName.trim()) {
-      toast.error(
-        "Product name is required.",
-      );
+      toast.error("Product name is required.");
 
       return;
     }
 
     if (!description.trim()) {
-      toast.error(
-        "Product description is required.",
-      );
+      toast.error("Product description is required.");
 
       return;
     }
 
-    const numericPrice =
-      Number(price);
+    const numericPrice = Number(price);
 
-    if (
-      Number.isNaN(
-        numericPrice,
-      ) ||
-      numericPrice < 0
-    ) {
-      toast.error(
-        "Enter a valid product price.",
-      );
+    if (Number.isNaN(numericPrice) || numericPrice < 0) {
+      toast.error("Enter a valid product price.");
 
       return;
     }
 
-    const numericQuantity =
-      Number(quantity);
+    const numericQuantity = Number(quantity);
 
-    if (
-      Number.isNaN(
-        numericQuantity,
-      ) ||
-      numericQuantity < 0
-    ) {
-      toast.error(
-        "Enter a valid quantity.",
-      );
+    if (Number.isNaN(numericQuantity) || numericQuantity < 0) {
+      toast.error("Enter a valid quantity.");
 
       return;
     }
 
     if (!images.length) {
-      toast.error(
-        "At least one product image is required.",
-      );
+      toast.error("At least one product image is required.");
 
       return;
     }
@@ -1024,123 +831,81 @@ const ProductDetailsPage = () => {
     setIsSaving(true);
 
     try {
-      const productImages =
-        buildProductImages();
+      const productImages = buildProductImages();
 
-      const updated =
-        await updateProduct(
-          product.id,
-          {
-            name:
-              productName.trim(),
+      const updated = await updateProduct(product.id, {
+        name: productName.trim(),
 
-            description:
-              description.trim(),
+        description: description.trim(),
 
-            category,
+        category,
 
-            price:
-              numericPrice,
+        price: numericPrice,
 
-            currency:
-              currency
-                .trim()
-                .toUpperCase(),
+        currency: currency.trim().toUpperCase(),
 
-            quantity:
-              numericQuantity,
+        quantity: numericQuantity,
 
-            dimensions: {
-              width:
-                width
-                  ? Number(width)
-                  : 0,
+        dimensions: {
+          width: width ? Number(width) : 0,
 
-              depth:
-                depth
-                  ? Number(depth)
-                  : 0,
+          depth: depth ? Number(depth) : 0,
 
-              height:
-                height
-                  ? Number(height)
-                  : 0,
+          height: height ? Number(height) : 0,
 
-              unit,
-            },
+          unit,
+        },
 
-            /*
-             * These are now the product's
-             * tenant-defined characteristics.
-             */
-            options,
+        /*
+         * IMPORTANT:
+         *
+         * These are product-level
+         * selections copied from
+         * the tenant schema.
+         */
+        options: resolvedOptions.map((option) => ({
+          ...option,
 
-            /*
-             * Includes both standard images
-             * and 360° frames.
-             */
-            images:
-              productImages,
+          values: option.values.map((value) => ({
+            ...value,
+          })),
+        })),
 
-            /*
-             * Preserve existing structured
-             * media until the backend media
-             * pipeline is connected.
-             */
-            media:
-              product.media,
+        images: productImages,
 
-            variants:
-              product.variants,
+        media: product.media,
 
-            model3DUrl:
-              product.model3DUrl,
+        variants: product.variants,
 
-            status:
-              nextStatus ??
-              status,
-          },
-        );
+        model3DUrl: product.model3DUrl,
+
+        status: nextStatus ?? status,
+      });
 
       setProduct(updated);
 
-      setStatus(
-        updated.status,
-      );
+      setStatus(updated.status);
 
-      if (
-        nextStatus === "active"
-      ) {
-        toast.success(
-          "Product published successfully.",
-        );
-      } else if (
-        nextStatus === "archived"
-      ) {
-        toast.success(
-          "Product archived.",
-        );
-      } else if (
-        nextStatus === "draft"
-      ) {
-        toast.success(
-          "Product restored to draft.",
-        );
+      /*
+       * Refresh product options
+       * from backend response.
+       */
+      setOptions(updated.options ?? []);
+
+      if (nextStatus === "active") {
+        toast.success("Product published successfully.");
+      } else if (nextStatus === "archived") {
+        toast.success("Product archived.");
+      } else if (nextStatus === "draft") {
+        toast.success("Product restored to draft.");
       } else {
-        toast.success(
-          "Product changes saved.",
-        );
+        toast.success("Product changes saved.");
       }
     } catch (error) {
-      console.error(
-        "Failed to save product:",
-        error,
-      );
+      console.error("Failed to save product:", error);
 
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Unable to save product.",
+        error instanceof Error ? error.message : "Unable to save product.",
       );
     } finally {
       setIsSaving(false);
@@ -1153,13 +918,7 @@ const ProductDetailsPage = () => {
 
   const selectedImage =
     normalImages[
-      Math.min(
-        selectedImageIndex,
-        Math.max(
-          normalImages.length - 1,
-          0,
-        ),
-      )
+      Math.min(selectedImageIndex, Math.max(normalImages.length - 1, 0))
     ];
 
   /* =======================================================
@@ -1185,10 +944,7 @@ const ProductDetailsPage = () => {
     return (
       <main className="flex h-[calc(100vh-4rem)] items-center justify-center bg-[var(--color-background)] px-4">
         <div className="text-center">
-          <Package
-            size={38}
-            className="mx-auto text-gray-300"
-          />
+          <Package size={38} className="mx-auto text-gray-300" />
 
           <h1 className="mt-4 text-xl font-bold text-gray-900">
             Product not found
@@ -1202,8 +958,7 @@ const ProductDetailsPage = () => {
             to="/catalog"
             className="mt-5 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-[var(--color-primary-foreground)]"
             style={{
-              backgroundColor:
-                "var(--color-primary)",
+              backgroundColor: "var(--color-primary)",
             }}
           >
             <ArrowLeft size={16} />
@@ -1221,8 +976,9 @@ const ProductDetailsPage = () => {
   return (
     <main className="h-[calc(100vh-4rem)] overflow-hidden bg-[var(--color-background)]">
       <div className="mx-auto flex h-full max-w-[1500px] flex-col px-4 py-4 sm:px-6 lg:px-8">
-
-        {/* HEADER */}
+        {/* =================================================
+            HEADER
+        ================================================= */}
 
         <header className="shrink-0">
           <div className="flex items-center justify-between gap-4">
@@ -1235,23 +991,16 @@ const ProductDetailsPage = () => {
             </Link>
 
             <div className="flex items-center gap-2">
-              <StatusBadge
-                status={status}
-              />
+              <StatusBadge status={status} />
 
               {status === "draft" && (
                 <button
                   type="button"
-                  onClick={() =>
-                    void handleSave(
-                      "active",
-                    )
-                  }
+                  onClick={() => void handleSave("active")}
                   disabled={isSaving}
                   className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-[var(--color-primary-foreground)] shadow-sm transition hover:-translate-y-0.5 disabled:opacity-60"
                   style={{
-                    backgroundColor:
-                      "var(--color-primary)",
+                    backgroundColor: "var(--color-primary)",
                   }}
                 >
                   <Check size={16} />
@@ -1262,11 +1011,7 @@ const ProductDetailsPage = () => {
               {status === "active" && (
                 <button
                   type="button"
-                  onClick={() =>
-                    void handleSave(
-                      "archived",
-                    )
-                  }
+                  onClick={() => void handleSave("archived")}
                   disabled={isSaving}
                   className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-black/[0.03] disabled:opacity-60"
                 >
@@ -1278,16 +1023,11 @@ const ProductDetailsPage = () => {
               {status === "archived" && (
                 <button
                   type="button"
-                  onClick={() =>
-                    void handleSave(
-                      "draft",
-                    )
-                  }
+                  onClick={() => void handleSave("draft")}
                   disabled={isSaving}
                   className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold text-[var(--color-primary-foreground)] disabled:opacity-60"
                   style={{
-                    backgroundColor:
-                      "var(--color-primary)",
+                    backgroundColor: "var(--color-primary)",
                   }}
                 >
                   Restore
@@ -1296,17 +1036,13 @@ const ProductDetailsPage = () => {
 
               <button
                 type="button"
-                onClick={() =>
-                  void handleSave()
-                }
+                onClick={() => void handleSave()}
                 disabled={isSaving}
                 className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-black/[0.03] disabled:opacity-60"
               >
                 <Save size={16} />
 
-                {isSaving
-                  ? "Saving..."
-                  : "Save changes"}
+                {isSaving ? "Saving..." : "Save changes"}
               </button>
             </div>
           </div>
@@ -1316,53 +1052,47 @@ const ProductDetailsPage = () => {
               <p
                 className="text-[10px] font-bold uppercase tracking-[0.2em]"
                 style={{
-                  color:
-                    "var(--color-primary)",
+                  color: "var(--color-primary)",
                 }}
               >
                 Product Management
               </p>
 
               <h1 className="mt-1 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-                {productName ||
-                  "Untitled product"}
+                {productName || "Untitled product"}
               </h1>
             </div>
 
             <p className="hidden text-xs text-gray-400 sm:block">
               Last saved{" "}
               {new Date(
-                product.updatedAt ??
-                  product.createdAt,
+                product.updatedAt ?? product.createdAt,
               ).toLocaleDateString()}
             </p>
           </div>
         </header>
 
-        {/* WORKSPACE */}
+        {/* =================================================
+            WORKSPACE
+        ================================================= */}
 
         <div className="mt-5 grid min-h-0 flex-1 gap-5 lg:grid-cols-[minmax(0,1fr)_430px]">
-
-          {/* LEFT EDITOR */}
+          {/* =================================================
+              LEFT EDITOR
+          ================================================= */}
 
           <section className="min-h-0 overflow-y-auto pr-1 lg:pr-2">
             <div className="space-y-4 pb-6">
-
               {/* PRODUCT */}
 
               <Panel>
-                <PanelHeading
-                  eyebrow="Product"
-                  title="Product information"
-                />
+                <PanelHeading eyebrow="Product" title="Product information" />
 
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
                   <Field
                     label="Product name"
                     value={productName}
-                    onChange={
-                      setProductName
-                    }
+                    onChange={setProductName}
                   />
 
                   <div>
@@ -1373,27 +1103,15 @@ const ProductDetailsPage = () => {
                     <select
                       value={category}
                       onChange={(event) =>
-                        setCategory(
-                          event.target
-                            .value as ProductCategory,
-                        )
+                        setCategory(event.target.value as ProductCategory)
                       }
                       className="mt-2 h-11 w-full rounded-xl border border-black/10 bg-white px-4 text-sm outline-none transition focus:border-[var(--color-primary)]"
                     >
-                      {PRODUCT_CATEGORIES.map(
-                        (item) => (
-                          <option
-                            key={
-                              item.value
-                            }
-                            value={
-                              item.value
-                            }
-                          >
-                            {item.label}
-                          </option>
-                        ),
-                      )}
+                      {PRODUCT_CATEGORIES.map((item) => (
+                        <option key={item.value} value={item.value}>
+                          {item.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -1407,11 +1125,7 @@ const ProductDetailsPage = () => {
                   <Field
                     label="Currency"
                     value={currency}
-                    onChange={(value) =>
-                      setCurrency(
-                        value.toUpperCase(),
-                      )
-                    }
+                    onChange={(value) => setCurrency(value.toUpperCase())}
                   />
                 </div>
 
@@ -1422,11 +1136,7 @@ const ProductDetailsPage = () => {
 
                   <textarea
                     value={description}
-                    onChange={(event) =>
-                      setDescription(
-                        event.target.value,
-                      )
-                    }
+                    onChange={(event) => setDescription(event.target.value)}
                     rows={4}
                     className="mt-2 w-full resize-none rounded-xl border border-black/10 px-4 py-3 text-sm leading-6 outline-none transition focus:border-[var(--color-primary)]"
                   />
@@ -1439,9 +1149,7 @@ const ProductDetailsPage = () => {
                 <PanelHeading
                   eyebrow="Inventory"
                   title="Stock & quantity"
-                  icon={
-                    <Package size={17} />
-                  }
+                  icon={<Package size={17} />}
                 />
 
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -1459,66 +1167,66 @@ const ProductDetailsPage = () => {
                       </p>
 
                       <p className="mt-1 text-sm font-semibold text-gray-800">
-                        {Number(quantity) >
-                        0
-                          ? "In stock"
-                          : "Out of stock"}
+                        {Number(quantity) > 0 ? "In stock" : "Out of stock"}
                       </p>
                     </div>
                   </div>
                 </div>
               </Panel>
 
-              {/* CHARACTERISTICS */}
+              {/* =================================================
+                  PRODUCT CHARACTERISTICS
+              ================================================= */}
 
               <Panel>
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowCharacteristics(
-                      (current) =>
-                        !current,
-                    )
-                  }
+                  onClick={() => setShowCharacteristics((current) => !current)}
                   className="flex w-full items-center justify-between text-left"
                 >
                   <PanelHeading
                     eyebrow="Tenant schema"
                     title="Product characteristics"
-                    icon={
-                      <Sparkles
-                        size={17}
-                      />
-                    }
+                    icon={<Sparkles size={17} />}
                   />
 
                   <ChevronDown
                     size={18}
                     className={`text-gray-400 transition ${
-                      showCharacteristics
-                        ? "rotate-180"
-                        : ""
+                      showCharacteristics ? "rotate-180" : ""
                     }`}
                   />
                 </button>
 
                 {showCharacteristics && (
                   <div className="mt-5">
+                    {/* INFO */}
 
                     <div className="mb-4 rounded-xl bg-black/[0.025] p-3">
-                      <p className="text-[11px] leading-5 text-gray-500">
-                        These characteristics come from this tenant's Catalog Settings. Products only choose which tenant characteristics apply.
-                      </p>
-                    </div>
-
-                    {!options.length ? (
-                      <div className="rounded-2xl border border-dashed border-black/10 p-5 text-center">
+                      <div className="flex gap-2">
                         <Sparkles
-                          size={25}
-                          className="mx-auto text-gray-300"
+                          size={14}
+                          className="mt-0.5 shrink-0"
+                          style={{
+                            color: "var(--color-primary)",
+                          }}
                         />
 
-                        <p className="mt-2 text-sm font-medium text-gray-700">
+                        <p className="text-[11px] leading-5 text-gray-500">
+                          These characteristics are defined by the tenant in
+                          Catalog Settings. Here you choose which ones apply to
+                          this specific product.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* CURRENT CHARACTERISTICS */}
+
+                    {!options.length ? (
+                      <div className="rounded-2xl border border-dashed border-black/10 p-6 text-center">
+                        <Sparkles size={27} className="mx-auto text-gray-300" />
+
+                        <p className="mt-2 text-sm font-semibold text-gray-700">
                           No characteristics attached
                         </p>
 
@@ -1528,41 +1236,28 @@ const ProductDetailsPage = () => {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {options.map(
-                          (option) => (
-                            <CharacteristicEditor
-                              key={
-                                option.id
-                              }
-                              option={
-                                option
-                              }
-                              onRemove={() =>
-                                handleRemoveCharacteristic(
-                                  option.id,
-                                )
-                              }
-                              onValueChange={(
-                                value,
-                              ) =>
-                                handleCharacteristicValueChange(
-                                  option.id,
-                                  value,
-                                )
-                              }
-                              onSelectValueChange={(
-                                value,
-                              ) =>
-                                handleSelectableValueChange(
-                                  option.id,
-                                  value,
-                                )
-                              }
-                            />
-                          ),
-                        )}
+                        {resolvedOptions.map((option) => (
+                          <CharacteristicEditor
+                            key={option.id}
+                            option={option}
+                            onRemove={() =>
+                              handleRemoveCharacteristic(option.id)
+                            }
+                            onValueChange={(value) =>
+                              handleCharacteristicValueChange(option.id, value)
+                            }
+                            onSelectValueChange={(value) =>
+                              handleSelectableValueChange(option.id, value)
+                            }
+                            onImageChange={(value) =>
+                              handleImageCharacteristicChange(option.id, value)
+                            }
+                          />
+                        ))}
                       </div>
                     )}
+
+                    {/* ADD CHARACTERISTIC */}
 
                     {isAddingCharacteristic ? (
                       <div className="mt-4 rounded-2xl border border-[var(--color-primary)]/20 bg-black/[0.015] p-4">
@@ -1570,42 +1265,24 @@ const ProductDetailsPage = () => {
                           Add tenant characteristic
                         </p>
 
-                        {availableCharacteristics.length >
-                        0 ? (
+                        {availableCharacteristics.length > 0 ? (
                           <>
                             <select
-                              value={
-                                selectedCharacteristicId
-                              }
-                              onChange={(
-                                event,
-                              ) =>
-                                setSelectedCharacteristicId(
-                                  event.target
-                                    .value,
-                                )
+                              value={selectedCharacteristicId}
+                              onChange={(event) =>
+                                setSelectedCharacteristicId(event.target.value)
                               }
                               className="mt-2 h-11 w-full rounded-xl border border-black/10 bg-white px-3 text-sm outline-none focus:border-[var(--color-primary)]"
                             >
-                              <option value="">
-                                Select characteristic
-                              </option>
+                              <option value="">Select characteristic</option>
 
                               {availableCharacteristics.map(
-                                (
-                                  characteristic,
-                                ) => (
+                                (characteristic) => (
                                   <option
-                                    key={
-                                      characteristic.id
-                                    }
-                                    value={
-                                      characteristic.id
-                                    }
+                                    key={characteristic.id}
+                                    value={characteristic.id}
                                   >
-                                    {
-                                      characteristic.name
-                                    }
+                                    {characteristic.name}
                                   </option>
                                 ),
                               )}
@@ -1614,13 +1291,10 @@ const ProductDetailsPage = () => {
                             <div className="mt-3 flex gap-2">
                               <button
                                 type="button"
-                                onClick={
-                                  handleAddCharacteristic
-                                }
+                                onClick={handleAddCharacteristic}
                                 className="rounded-xl px-4 py-2 text-xs font-bold text-[var(--color-primary-foreground)]"
                                 style={{
-                                  backgroundColor:
-                                    "var(--color-primary)",
+                                  backgroundColor: "var(--color-primary)",
                                 }}
                               >
                                 Add characteristic
@@ -1629,13 +1303,9 @@ const ProductDetailsPage = () => {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  setIsAddingCharacteristic(
-                                    false,
-                                  );
+                                  setIsAddingCharacteristic(false);
 
-                                  setSelectedCharacteristicId(
-                                    "",
-                                  );
+                                  setSelectedCharacteristicId("");
                                 }}
                                 className="rounded-xl border border-black/10 bg-white px-4 py-2 text-xs font-semibold text-gray-600"
                               >
@@ -1646,8 +1316,7 @@ const ProductDetailsPage = () => {
                         ) : (
                           <div className="mt-3 rounded-xl bg-amber-50 p-3">
                             <p className="text-xs leading-5 text-amber-700">
-                              {tenantCharacteristics.length ===
-                              0
+                              {tenantCharacteristics.length === 0
                                 ? "This tenant has not configured any catalog characteristics yet."
                                 : "All available tenant characteristics are already attached to this product."}
                             </p>
@@ -1664,11 +1333,7 @@ const ProductDetailsPage = () => {
                     ) : (
                       <button
                         type="button"
-                        onClick={() =>
-                          setIsAddingCharacteristic(
-                            true,
-                          )
-                        }
+                        onClick={() => setIsAddingCharacteristic(true)}
                         className="mt-4 inline-flex items-center gap-2 rounded-xl border border-dashed border-black/15 px-4 py-2.5 text-xs font-bold text-gray-600 transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
                       >
                         <Plus size={15} />
@@ -1684,25 +1349,15 @@ const ProductDetailsPage = () => {
               <Panel>
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowDimensions(
-                      (current) =>
-                        !current,
-                    )
-                  }
+                  onClick={() => setShowDimensions((current) => !current)}
                   className="flex w-full items-center justify-between text-left"
                 >
-                  <PanelHeading
-                    eyebrow="Measurements"
-                    title="Dimensions"
-                  />
+                  <PanelHeading eyebrow="Measurements" title="Dimensions" />
 
                   <ChevronDown
                     size={18}
                     className={`text-gray-400 transition ${
-                      showDimensions
-                        ? "rotate-180"
-                        : ""
+                      showDimensions ? "rotate-180" : ""
                     }`}
                   />
                 </button>
@@ -1738,27 +1393,15 @@ const ProductDetailsPage = () => {
                       <select
                         value={unit}
                         onChange={(event) =>
-                          setUnit(
-                            event.target
-                              .value as
-                              | "cm"
-                              | "mm"
-                              | "in",
-                          )
+                          setUnit(event.target.value as "cm" | "mm" | "in")
                         }
                         className="mt-1 h-11 w-full rounded-xl border border-black/10 bg-white px-3 text-sm font-semibold outline-none focus:border-[var(--color-primary)]"
                       >
-                        <option value="cm">
-                          cm
-                        </option>
+                        <option value="cm">cm</option>
 
-                        <option value="mm">
-                          mm
-                        </option>
+                        <option value="mm">mm</option>
 
-                        <option value="in">
-                          inches
-                        </option>
+                        <option value="in">inches</option>
                       </select>
                     </div>
                   </div>
@@ -1767,161 +1410,112 @@ const ProductDetailsPage = () => {
             </div>
           </section>
 
-          {/* RIGHT MEDIA */}
+          {/* =================================================
+              RIGHT MEDIA
+          ================================================= */}
 
           <aside className="min-h-0">
             <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-3xl border border-black/10 bg-white shadow-sm">
-
-              {/* COMPACT PREVIEW */}
+              {/* PREVIEW */}
 
               <div className="relative shrink-0 bg-black/[0.025]">
                 <div className="relative flex h-[220px] items-center justify-center overflow-hidden sm:h-[235px]">
                   {selectedImage ? (
                     <img
-                      src={
-                        selectedImage.url
-                      }
-                      alt={
-                        selectedImage.alt ??
-                        productName
-                      }
+                      src={selectedImage.url}
+                      alt={selectedImage.alt ?? productName}
                       className="h-full w-full object-contain"
                     />
                   ) : (
                     <div className="text-center text-gray-400">
-                      <ImagePlus
-                        size={32}
-                        className="mx-auto"
-                      />
+                      <ImagePlus size={32} className="mx-auto" />
 
-                      <p className="mt-2 text-xs">
-                        No product image
-                      </p>
+                      <p className="mt-2 text-xs">No product image</p>
                     </div>
                   )}
 
-                  {normalImages.length >
-                    1 && (
+                  {normalImages.length > 1 && (
                     <>
                       <button
                         type="button"
                         onClick={() =>
-                          setSelectedImageIndex(
-                            (current) =>
-                              current ===
-                              0
-                                ? normalImages.length -
-                                  1
-                                : current -
-                                  1,
+                          setSelectedImageIndex((current) =>
+                            current === 0
+                              ? normalImages.length - 1
+                              : current - 1,
                           )
                         }
                         className="absolute left-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-sm"
                       >
-                        <ChevronLeft
-                          size={17}
-                        />
+                        <ChevronLeft size={17} />
                       </button>
 
                       <button
                         type="button"
                         onClick={() =>
                           setSelectedImageIndex(
-                            (current) =>
-                              (current +
-                                1) %
-                              normalImages.length,
+                            (current) => (current + 1) % normalImages.length,
                           )
                         }
                         className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-sm"
                       >
-                        <ChevronRight
-                          size={17}
-                        />
+                        <ChevronRight size={17} />
                       </button>
                     </>
                   )}
 
                   <div className="absolute left-3 top-3 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white">
-                    {normalImages.length}{" "}
-                    image
-                    {normalImages.length ===
-                    1
-                      ? ""
-                      : "s"}
+                    {normalImages.length} image
+                    {normalImages.length === 1 ? "" : "s"}
                   </div>
                 </div>
 
                 {/* THUMBNAILS */}
 
                 <div className="flex gap-2 overflow-x-auto border-t border-black/[0.06] p-3">
-                  {normalImages.map(
-                    (image, index) => (
-                      <div
-                        key={
-                          image.id
-                        }
-                        className="group relative shrink-0"
+                  {normalImages.map((image, index) => (
+                    <div key={image.id} className="group relative shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedImageIndex(index)}
+                        className={`h-14 w-14 overflow-hidden rounded-lg border-2 transition ${
+                          selectedImageIndex === index
+                            ? "border-[var(--color-primary)]"
+                            : "border-transparent"
+                        }`}
                       >
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSelectedImageIndex(
-                              index,
-                            )
-                          }
-                          className={`h-14 w-14 overflow-hidden rounded-lg border-2 transition ${
-                            selectedImageIndex ===
-                            index
-                              ? "border-[var(--color-primary)]"
-                              : "border-transparent"
-                          }`}
-                        >
-                          <img
-                            src={
-                              image.url
-                            }
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
-                        </button>
+                        <img
+                          src={image.url}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleRemoveImage(
-                              image.id,
-                            )
-                          }
-                          className="absolute -right-1 -top-1 hidden h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white group-hover:flex"
-                        >
-                          <X size={11} />
-                        </button>
-                      </div>
-                    ),
-                  )}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(image.id)}
+                        className="absolute -right-1 -top-1 hidden h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white group-hover:flex"
+                      >
+                        <X size={11} />
+                      </button>
+                    </div>
+                  ))}
 
                   <button
                     type="button"
-                    onClick={() =>
-                      imageInputRef.current?.click()
-                    }
+                    onClick={() => imageInputRef.current?.click()}
                     className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-dashed border-black/15 text-gray-400 transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
                   >
                     <Plus size={18} />
                   </button>
 
                   <input
-                    ref={
-                      imageInputRef
-                    }
+                    ref={imageInputRef}
                     type="file"
                     accept="image/*"
                     multiple
                     hidden
-                    onChange={
-                      handleImageUpload
-                    }
+                    onChange={handleImageUpload}
                   />
                 </div>
               </div>
@@ -1932,8 +1526,7 @@ const ProductDetailsPage = () => {
                 <p
                   className="text-[10px] font-bold uppercase tracking-[0.18em]"
                   style={{
-                    color:
-                      "var(--color-primary)",
+                    color: "var(--color-primary)",
                   }}
                 >
                   Media Management
@@ -1948,12 +1541,7 @@ const ProductDetailsPage = () => {
                 <div className="mt-4 rounded-2xl border border-black/10">
                   <button
                     type="button"
-                    onClick={() =>
-                      setShow360(
-                        (current) =>
-                          !current,
-                      )
-                    }
+                    onClick={() => setShow360((current) => !current)}
                     className="flex w-full items-center justify-between p-4 text-left"
                   >
                     <div className="flex items-center gap-3">
@@ -1962,13 +1550,10 @@ const ProductDetailsPage = () => {
                         style={{
                           backgroundColor:
                             "color-mix(in srgb, var(--color-primary) 10%, transparent)",
-                          color:
-                            "var(--color-primary)",
+                          color: "var(--color-primary)",
                         }}
                       >
-                        <RotateCw
-                          size={17}
-                        />
+                        <RotateCw size={17} />
                       </div>
 
                       <div>
@@ -1977,10 +1562,7 @@ const ProductDetailsPage = () => {
                         </p>
 
                         <p className="text-[11px] text-gray-400">
-                          {
-                            rotationFrames.length
-                          }{" "}
-                          frames
+                          {rotationFrames.length} frames
                         </p>
                       </div>
                     </div>
@@ -1988,38 +1570,26 @@ const ProductDetailsPage = () => {
                     <ChevronDown
                       size={17}
                       className={`text-gray-400 transition ${
-                        show360
-                          ? "rotate-180"
-                          : ""
+                        show360 ? "rotate-180" : ""
                       }`}
                     />
                   </button>
 
                   {show360 && (
                     <div className="border-t border-black/[0.06] p-4">
-                      {rotationFrames.length >
-                      0 ? (
+                      {rotationFrames.length > 0 ? (
                         <>
                           <div className="relative overflow-hidden rounded-xl bg-black/[0.04]">
                             <img
-                              src={
-                                currentRotationFrame?.url
-                              }
+                              src={currentRotationFrame?.url}
                               alt="360 product frame"
                               className="h-44 w-full object-contain"
-                              draggable={
-                                false
-                              }
+                              draggable={false}
                             />
 
                             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-medium text-white">
-                              Frame{" "}
-                              {rotationIndex +
-                                1}{" "}
-                              /{" "}
-                              {
-                                rotationFrames.length
-                              }
+                              Frame {rotationIndex + 1} /{" "}
+                              {rotationFrames.length}
                             </div>
                           </div>
 
@@ -2027,44 +1597,24 @@ const ProductDetailsPage = () => {
                             <button
                               type="button"
                               onClick={() =>
-                                setRotationIndex(
-                                  (current) =>
-                                    current ===
-                                    0
-                                      ? rotationFrames.length -
-                                        1
-                                      : current -
-                                        1,
+                                setRotationIndex((current) =>
+                                  current === 0
+                                    ? rotationFrames.length - 1
+                                    : current - 1,
                                 )
                               }
                               className="flex h-9 w-9 items-center justify-center rounded-lg border border-black/10"
                             >
-                              <ChevronLeft
-                                size={16}
-                              />
+                              <ChevronLeft size={16} />
                             </button>
 
                             <input
                               type="range"
                               min="0"
-                              max={Math.max(
-                                rotationFrames.length -
-                                  1,
-                                0,
-                              )}
-                              value={
-                                rotationIndex
-                              }
-                              onChange={(
-                                event,
-                              ) =>
-                                setRotationIndex(
-                                  Number(
-                                    event
-                                      .target
-                                      .value,
-                                  ),
-                                )
+                              max={Math.max(rotationFrames.length - 1, 0)}
+                              value={rotationIndex}
+                              onChange={(event) =>
+                                setRotationIndex(Number(event.target.value))
                               }
                               className="min-w-0 flex-1 accent-[var(--color-primary)]"
                             />
@@ -2074,16 +1624,12 @@ const ProductDetailsPage = () => {
                               onClick={() =>
                                 setRotationIndex(
                                   (current) =>
-                                    (current +
-                                      1) %
-                                    rotationFrames.length,
+                                    (current + 1) % rotationFrames.length,
                                 )
                               }
                               className="flex h-9 w-9 items-center justify-center rounded-lg border border-black/10"
                             >
-                              <ChevronRight
-                                size={16}
-                              />
+                              <ChevronRight size={16} />
                             </button>
                           </div>
 
@@ -2091,10 +1637,7 @@ const ProductDetailsPage = () => {
                             <button
                               type="button"
                               onClick={() =>
-                                setIsAutoRotating(
-                                  (current) =>
-                                    !current,
-                                )
+                                setIsAutoRotating((current) => !current)
                               }
                               className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold ${
                                 isAutoRotating
@@ -2104,15 +1647,12 @@ const ProductDetailsPage = () => {
                               style={
                                 isAutoRotating
                                   ? {
-                                      backgroundColor:
-                                        "var(--color-primary)",
+                                      backgroundColor: "var(--color-primary)",
                                     }
                                   : undefined
                               }
                             >
-                              <RotateCw
-                                size={14}
-                              />
+                              <RotateCw size={14} />
 
                               {isAutoRotating
                                 ? "Stop rotation"
@@ -2121,14 +1661,10 @@ const ProductDetailsPage = () => {
 
                             <button
                               type="button"
-                              onClick={() =>
-                                frameInputRef.current?.click()
-                              }
+                              onClick={() => frameInputRef.current?.click()}
                               className="flex items-center justify-center gap-2 rounded-lg border border-black/10 px-3 py-2 text-xs font-semibold text-gray-700"
                             >
-                              <Plus
-                                size={14}
-                              />
+                              <Plus size={14} />
                               Add frames
                             </button>
                           </div>
@@ -2145,76 +1681,52 @@ const ProductDetailsPage = () => {
                           </p>
 
                           <p className="mt-1 text-[11px] leading-5 text-gray-400">
-                            Upload multiple angles. More images create smoother rotation.
+                            Upload multiple angles for a smoother rotation.
                           </p>
 
                           <button
                             type="button"
-                            onClick={() =>
-                              frameInputRef.current?.click()
-                            }
+                            onClick={() => frameInputRef.current?.click()}
                             className="mt-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-[var(--color-primary-foreground)]"
                             style={{
-                              backgroundColor:
-                                "var(--color-primary)",
+                              backgroundColor: "var(--color-primary)",
                             }}
                           >
-                            <Upload
-                              size={14}
-                            />
+                            <Upload size={14} />
                             Add 360° frames
                           </button>
                         </div>
                       )}
 
                       <input
-                        ref={
-                          frameInputRef
-                        }
+                        ref={frameInputRef}
                         type="file"
                         accept="image/*"
                         multiple
                         hidden
-                        onChange={
-                          handle360Upload
-                        }
+                        onChange={handle360Upload}
                       />
 
-                      {rotationFrames.length >
-                        0 && (
+                      {rotationFrames.length > 0 && (
                         <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
-                          {rotationFrames.map(
-                            (
-                              frame,
-                              index,
-                            ) => (
-                              <button
-                                key={
-                                  frame.id
-                                }
-                                type="button"
-                                onClick={() =>
-                                  setRotationIndex(
-                                    index,
-                                  )
-                                }
-                                className={`h-9 w-9 shrink-0 overflow-hidden rounded-md border-2 ${
-                                  rotationIndex ===
-                                  index
-                                    ? "border-[var(--color-primary)]"
-                                    : "border-transparent"
-                                }`}
-                              >
-                                <img
-                                  src={
-                                    frame.url
-                                  }
-                                  alt=""
-                                  className="h-full w-full object-cover"
-                                />
-                              </button>
-                            ),
-                          )}
+                          {rotationFrames.map((frame, index) => (
+                            <button
+                              key={frame.id}
+                              type="button"
+                              onClick={() => setRotationIndex(index)}
+                              className={`h-9 w-9 shrink-0 overflow-hidden rounded-md border-2 ${
+                                rotationIndex === index
+                                  ? "border-[var(--color-primary)]"
+                                  : "border-transparent"
+                              }`}
+                            >
+                              <img
+                                src={frame.url}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            </button>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -2226,12 +1738,7 @@ const ProductDetailsPage = () => {
                 <div className="mt-3 rounded-2xl border border-black/10">
                   <button
                     type="button"
-                    onClick={() =>
-                      setShow3D(
-                        (current) =>
-                          !current,
-                      )
-                    }
+                    onClick={() => setShow3D((current) => !current)}
                     className="flex w-full items-center justify-between p-4 text-left"
                   >
                     <div className="flex items-center gap-3">
@@ -2240,8 +1747,7 @@ const ProductDetailsPage = () => {
                         style={{
                           backgroundColor:
                             "color-mix(in srgb, var(--color-primary) 10%, transparent)",
-                          color:
-                            "var(--color-primary)",
+                          color: "var(--color-primary)",
                         }}
                       >
                         <Box size={17} />
@@ -2252,18 +1758,14 @@ const ProductDetailsPage = () => {
                           3D Model
                         </p>
 
-                        <p className="text-[11px] text-gray-400">
-                          GLB / GLTF
-                        </p>
+                        <p className="text-[11px] text-gray-400">GLB / GLTF</p>
                       </div>
                     </div>
 
                     <ChevronDown
                       size={17}
                       className={`text-gray-400 transition ${
-                        show3D
-                          ? "rotate-180"
-                          : ""
+                        show3D ? "rotate-180" : ""
                       }`}
                     />
                   </button>
@@ -2278,13 +1780,10 @@ const ProductDetailsPage = () => {
                               style={{
                                 backgroundColor:
                                   "color-mix(in srgb, var(--color-primary) 10%, transparent)",
-                                color:
-                                  "var(--color-primary)",
+                                color: "var(--color-primary)",
                               }}
                             >
-                              <Box
-                                size={18}
-                              />
+                              <Box size={18} />
                             </div>
 
                             <div className="min-w-0 flex-1">
@@ -2301,9 +1800,7 @@ const ProductDetailsPage = () => {
                           <div className="mt-3 flex gap-2">
                             <button
                               type="button"
-                              onClick={() =>
-                                modelInputRef.current?.click()
-                              }
+                              onClick={() => modelInputRef.current?.click()}
                               className="flex-1 rounded-lg border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-gray-700"
                             >
                               Replace
@@ -2311,9 +1808,7 @@ const ProductDetailsPage = () => {
 
                             <button
                               type="button"
-                              onClick={
-                                handleRemove3DModel
-                              }
+                              onClick={handleRemove3DModel}
                               className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600"
                             >
                               Remove
@@ -2322,10 +1817,7 @@ const ProductDetailsPage = () => {
                         </div>
                       ) : (
                         <div className="rounded-xl border border-dashed border-black/10 p-5 text-center">
-                          <Box
-                            size={26}
-                            className="mx-auto text-gray-300"
-                          />
+                          <Box size={26} className="mx-auto text-gray-300" />
 
                           <p className="mt-2 text-xs font-semibold text-gray-700">
                             No 3D model uploaded
@@ -2337,33 +1829,24 @@ const ProductDetailsPage = () => {
 
                           <button
                             type="button"
-                            onClick={() =>
-                              modelInputRef.current?.click()
-                            }
+                            onClick={() => modelInputRef.current?.click()}
                             className="mt-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-[var(--color-primary-foreground)]"
                             style={{
-                              backgroundColor:
-                                "var(--color-primary)",
+                              backgroundColor: "var(--color-primary)",
                             }}
                           >
-                            <Upload
-                              size={14}
-                            />
+                            <Upload size={14} />
                             Add 3D model
                           </button>
                         </div>
                       )}
 
                       <input
-                        ref={
-                          modelInputRef
-                        }
+                        ref={modelInputRef}
                         type="file"
                         accept=".glb,.gltf,model/gltf-binary,model/gltf+json"
                         hidden
-                        onChange={
-                          handle3DModelUpload
-                        }
+                        onChange={handle3DModelUpload}
                       />
                     </div>
                   )}
@@ -2377,31 +1860,29 @@ const ProductDetailsPage = () => {
                       size={14}
                       className="mt-0.5 shrink-0"
                       style={{
-                        color:
-                          "var(--color-primary)",
+                        color: "var(--color-primary)",
                       }}
                     />
 
                     <p className="text-[11px] leading-5 text-gray-500">
-                      More 360° images create a smoother rotation. The image sequence is separate from the eventual 3D model, which will power the future 3D and AR experience.
+                      360° images and 3D models are managed separately. The 360°
+                      sequence provides image-based rotation, while the 3D model
+                      will power the future 3D and AR experience.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* SAVE FOOTER */}
+              {/* SAVE */}
 
               <div className="shrink-0 border-t border-black/10 bg-white p-3">
                 <button
                   type="button"
-                  onClick={() =>
-                    void handleSave()
-                  }
+                  onClick={() => void handleSave()}
                   disabled={isSaving}
                   className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold text-[var(--color-primary-foreground)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
                   style={{
-                    backgroundColor:
-                      "var(--color-primary)",
+                    backgroundColor: "var(--color-primary)",
                   }}
                 >
                   {isSaving ? (
@@ -2433,9 +1914,7 @@ type PanelProps = {
   children: ReactNode;
 };
 
-const Panel = ({
-  children,
-}: PanelProps) => (
+const Panel = ({ children }: PanelProps) => (
   <div className="rounded-3xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
     {children}
   </div>
@@ -2451,11 +1930,7 @@ type PanelHeadingProps = {
   icon?: ReactNode;
 };
 
-const PanelHeading = ({
-  eyebrow,
-  title,
-  icon,
-}: PanelHeadingProps) => (
+const PanelHeading = ({ eyebrow, title, icon }: PanelHeadingProps) => (
   <div className="flex items-center gap-3">
     {icon && (
       <div
@@ -2463,8 +1938,7 @@ const PanelHeading = ({
         style={{
           backgroundColor:
             "color-mix(in srgb, var(--color-primary) 10%, transparent)",
-          color:
-            "var(--color-primary)",
+          color: "var(--color-primary)",
         }}
       >
         {icon}
@@ -2475,16 +1949,13 @@ const PanelHeading = ({
       <p
         className="text-[10px] font-bold uppercase tracking-[0.18em]"
         style={{
-          color:
-            "var(--color-primary)",
+          color: "var(--color-primary)",
         }}
       >
         {eyebrow}
       </p>
 
-      <h2 className="text-base font-semibold text-gray-900">
-        {title}
-      </h2>
+      <h2 className="text-base font-semibold text-gray-900">{title}</h2>
     </div>
   </div>
 );
@@ -2496,36 +1967,19 @@ const PanelHeading = ({
 type FieldProps = {
   label: string;
   value: string;
-  onChange: (
-    value: string,
-  ) => void;
+  onChange: (value: string) => void;
   type?: "text" | "number";
 };
 
-const Field = ({
-  label,
-  value,
-  onChange,
-  type = "text",
-}: FieldProps) => (
+const Field = ({ label, value, onChange, type = "text" }: FieldProps) => (
   <div>
-    <label className="text-sm font-semibold text-gray-800">
-      {label}
-    </label>
+    <label className="text-sm font-semibold text-gray-800">{label}</label>
 
     <input
       type={type}
       value={value}
-      min={
-        type === "number"
-          ? "0"
-          : undefined
-      }
-      onChange={(event) =>
-        onChange(
-          event.target.value,
-        )
-      }
+      min={type === "number" ? "0" : undefined}
+      onChange={(event) => onChange(event.target.value)}
       className="mt-2 h-11 w-full rounded-xl border border-black/10 bg-white px-4 text-sm outline-none transition focus:border-[var(--color-primary)]"
     />
   </div>
@@ -2535,16 +1989,10 @@ const Field = ({
    STATUS BADGE
    ========================================================= */
 
-const StatusBadge = ({
-  status,
-}: {
-  status: ProductStatus;
-}) => {
-  const isPublished =
-    status === "active";
+const StatusBadge = ({ status }: { status: ProductStatus }) => {
+  const isPublished = status === "active";
 
-  const isArchived =
-    status === "archived";
+  const isArchived = status === "archived";
 
   return (
     <span
@@ -2580,13 +2028,11 @@ type CharacteristicEditorProps = {
 
   onRemove: () => void;
 
-  onValueChange: (
-    value: string,
-  ) => void;
+  onValueChange: (value: string) => void;
 
-  onSelectValueChange: (
-    value: string,
-  ) => void;
+  onSelectValueChange: (value: string) => void;
+
+  onImageChange: (value: string) => void;
 };
 
 const CharacteristicEditor = ({
@@ -2594,31 +2040,24 @@ const CharacteristicEditor = ({
   onRemove,
   onValueChange,
   onSelectValueChange,
+  onImageChange,
 }: CharacteristicEditorProps) => {
-  const selectedValue =
-    typeof option.value ===
-    "string"
-      ? option.value
-      : "";
+  const selectedValue = typeof option.value === "string" ? option.value : "";
 
-  const activeValues =
-    option.values.filter(
-      (value) =>
-        value.active !== false,
-    );
+  const activeValues = option.values.filter((value) => value.active !== false);
 
-  const isFreeInput =
-    option.type === "text" ||
-    option.type === "number";
+  const isFreeInput = option.type === "text" || option.type === "number";
+
+  const isImageInput = option.type === "image";
 
   return (
     <div className="rounded-2xl border border-black/10 bg-black/[0.012] p-4">
+      {/* HEADER */}
+
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-gray-800">
-              {option.name}
-            </p>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold text-gray-800">{option.name}</p>
 
             {option.required && (
               <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase text-amber-700">
@@ -2635,59 +2074,104 @@ const CharacteristicEditor = ({
         <button
           type="button"
           onClick={onRemove}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-500"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 transition hover:bg-red-50 hover:text-red-500"
           title="Remove characteristic"
         >
           <Trash2 size={15} />
         </button>
       </div>
 
+      {/* VALUE */}
+
       <div className="mt-3">
-        {isFreeInput ? (
+        {/* TEXT */}
+
+        {option.type === "text" && (
           <input
-            type={
-              option.type ===
-              "number"
-                ? "number"
-                : "text"
-            }
+            type="text"
             value={selectedValue}
-            onChange={(event) =>
-              onValueChange(
-                event.target.value,
-              )
-            }
+            onChange={(event) => onValueChange(event.target.value)}
             placeholder={`Enter ${option.name.toLowerCase()}`}
             className="h-10 w-full rounded-xl border border-black/10 bg-white px-3 text-sm outline-none focus:border-[var(--color-primary)]"
           />
-        ) : (
+        )}
+
+        {/* NUMBER */}
+
+        {option.type === "number" && (
+          <input
+            type="number"
+            value={selectedValue}
+            onChange={(event) => onValueChange(event.target.value)}
+            placeholder={`Enter ${option.name.toLowerCase()}`}
+            className="h-10 w-full rounded-xl border border-black/10 bg-white px-3 text-sm outline-none focus:border-[var(--color-primary)]"
+          />
+        )}
+
+        {/* IMAGE */}
+
+        {isImageInput && (
+          <div>
+            <input
+              type="url"
+              value={selectedValue}
+              onChange={(event) => onImageChange(event.target.value)}
+              placeholder="Enter image URL"
+              className="h-10 w-full rounded-xl border border-black/10 bg-white px-3 text-sm outline-none focus:border-[var(--color-primary)]"
+            />
+
+            {selectedValue && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-black/10 bg-white">
+                <img
+                  src={selectedValue}
+                  alt={option.name}
+                  className="h-36 w-full object-contain"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* SELECT / COLOR / MATERIAL / FINISH / SIZE */}
+
+        {!isFreeInput && !isImageInput && (
           <div className="flex flex-wrap gap-2">
             {activeValues.length ? (
-              activeValues.map(
-                (value) => (
-                  <CharacteristicValueButton
-                    key={value.id}
-                    value={value}
-                    selected={
-                      selectedValue ===
-                      value.id
-                    }
-                    onClick={() =>
-                      onSelectValueChange(
-                        value.id,
-                      )
-                    }
-                  />
-                ),
-              )
+              activeValues.map((value) => (
+                <CharacteristicValueButton
+                  key={value.id}
+                  value={value}
+                  selected={selectedValue === value.id}
+                  onClick={() => onSelectValueChange(value.id)}
+                />
+              ))
             ) : (
-              <p className="text-xs text-gray-400">
-                No configured values.
-              </p>
+              <p className="text-xs text-gray-400">No configured values.</p>
             )}
           </div>
         )}
       </div>
+
+      {/* SELECTED VALUE DESCRIPTION */}
+
+      {!isFreeInput &&
+        !isImageInput &&
+        selectedValue &&
+        (() => {
+          const selected = activeValues.find(
+            (value) => value.id === selectedValue,
+          );
+
+          if (!selected?.description) {
+            return null;
+          }
+
+          return (
+            <p className="mt-3 rounded-xl bg-white px-3 py-2 text-[11px] leading-5 text-gray-500">
+              {selected.description}
+            </p>
+          );
+        })()}
     </div>
   );
 };
@@ -2696,58 +2180,64 @@ const CharacteristicEditor = ({
    CHARACTERISTIC VALUE BUTTON
    ========================================================= */
 
-type CharacteristicValueButtonProps =
-  {
-    value: ProductOptionValue;
-    selected: boolean;
-    onClick: () => void;
-  };
+type CharacteristicValueButtonProps = {
+  value: ProductOptionValue;
 
-const CharacteristicValueButton =
-  ({
-    value,
-    selected,
-    onClick,
-  }: CharacteristicValueButtonProps) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-        selected
-          ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-gray-900"
-          : "border-black/10 bg-white text-gray-600 hover:border-black/20"
-      }`}
-    >
-      {value.hexCode && (
-        <span
-          className="h-4 w-4 rounded-full border border-black/10"
-          style={{
-            backgroundColor:
-              value.hexCode,
-          }}
-        />
-      )}
+  selected: boolean;
 
-      {value.imageUrl && (
-        <img
-          src={value.imageUrl}
-          alt=""
-          className="h-5 w-5 rounded-md object-cover"
-        />
-      )}
+  onClick: () => void;
+};
 
-      {value.name}
+const CharacteristicValueButton = ({
+  value,
+  selected,
+  onClick,
+}: CharacteristicValueButtonProps) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+      selected
+        ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-gray-900"
+        : "border-black/10 bg-white text-gray-600 hover:border-black/20"
+    }`}
+  >
+    {/* COLOR SWATCH */}
 
-      {selected && (
-        <Check
-          size={13}
-          style={{
-            color:
-              "var(--color-primary)",
-          }}
-        />
-      )}
-    </button>
-  );
+    {value.hexCode && (
+      <span
+        className="h-4 w-4 rounded-full border border-black/10"
+        style={{
+          backgroundColor: value.hexCode,
+        }}
+      />
+    )}
+
+    {/* IMAGE */}
+
+    {value.imageUrl && (
+      <img
+        src={value.imageUrl}
+        alt=""
+        className="h-5 w-5 rounded-md object-cover"
+      />
+    )}
+
+    {/* NAME */}
+
+    {value.name}
+
+    {/* CHECK */}
+
+    {selected && (
+      <Check
+        size={13}
+        style={{
+          color: "var(--color-primary)",
+        }}
+      />
+    )}
+  </button>
+);
 
 export default ProductDetailsPage;

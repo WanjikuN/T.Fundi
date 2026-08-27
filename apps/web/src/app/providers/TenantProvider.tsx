@@ -116,6 +116,10 @@ interface TenantContextValue {
   isSavingCatalog: boolean;
 }
 
+/* =========================================================
+   CONTEXT
+   ========================================================= */
+
 const TenantContext =
   createContext<TenantContextValue | undefined>(
     undefined,
@@ -169,6 +173,59 @@ const cloneCatalogSettings = (
       settings.characteristics ?? [],
     ),
 });
+
+/* =========================================================
+   NORMALIZE CATALOG SETTINGS
+   ========================================================= */
+
+const normalizeCatalogSettings = (
+  settings?: Partial<TenantCatalogSettings> | null,
+): TenantCatalogSettings => {
+  const source =
+    settings ?? {};
+
+  return {
+    ...DEFAULT_CATALOG_SETTINGS,
+
+    ...source,
+
+    categories:
+      source.categories?.length
+        ? [...source.categories]
+        : [...DEFAULT_CATEGORIES],
+
+    characteristics:
+      source.characteristics
+        ? cloneCharacteristics(
+            source.characteristics,
+          )
+        : [],
+
+    defaultCurrency:
+      source.defaultCurrency?.trim()
+        ? source.defaultCurrency
+            .trim()
+            .slice(0, 3)
+            .toUpperCase()
+        : DEFAULT_CATALOG_SETTINGS.defaultCurrency,
+
+    allowCustomCategories:
+      source.allowCustomCategories ??
+      DEFAULT_CATALOG_SETTINGS.allowCustomCategories,
+
+    allowCustomCharacteristics:
+      source.allowCustomCharacteristics ??
+      DEFAULT_CATALOG_SETTINGS.allowCustomCharacteristics,
+
+    requireDimensions:
+      source.requireDimensions ??
+      DEFAULT_CATALOG_SETTINGS.requireDimensions,
+
+    requirePrice:
+      source.requirePrice ??
+      DEFAULT_CATALOG_SETTINGS.requirePrice,
+  };
+};
 
 /* =========================================================
    PROVIDER
@@ -227,6 +284,8 @@ const TenantProvider = ({
      ======================================================= */
 
   useEffect(() => {
+    let mounted = true;
+
     const loadTenant = async () => {
       try {
         setIsLoading(true);
@@ -236,6 +295,10 @@ const TenantProvider = ({
 
         const tenantData =
           await getTenantByHost(host);
+
+        if (!mounted) {
+          return;
+        }
 
         if (!tenantData) {
           setError(
@@ -252,59 +315,23 @@ const TenantProvider = ({
         });
 
         /*
-         * Catalog settings may not yet be part
-         * of the Tenant type/backend response.
+         * catalogSettings is temporarily read from
+         * the tenant response.
          *
-         * This compatibility read allows us to
-         * continue developing the frontend.
+         * Once the backend endpoint is connected,
+         * the same normalized structure can be
+         * returned directly by the tenant service.
          */
+
         const tenantWithCatalog =
           tenantData as Tenant & {
             catalogSettings?: TenantCatalogSettings;
           };
 
-        const loaded =
-          tenantWithCatalog.catalogSettings ??
-          DEFAULT_CATALOG_SETTINGS;
-
-        const normalizedCatalogSettings: TenantCatalogSettings =
-          {
-            ...DEFAULT_CATALOG_SETTINGS,
-
-            ...loaded,
-
-            categories:
-              loaded.categories?.length
-                ? [...loaded.categories]
-                : [...DEFAULT_CATEGORIES],
-
-            characteristics:
-              loaded.characteristics
-                ? cloneCharacteristics(
-                    loaded.characteristics,
-                  )
-                : [],
-
-            defaultCurrency:
-              loaded.defaultCurrency ||
-              DEFAULT_CATALOG_SETTINGS.defaultCurrency,
-
-            allowCustomCategories:
-              loaded.allowCustomCategories ??
-              DEFAULT_CATALOG_SETTINGS.allowCustomCategories,
-
-            allowCustomCharacteristics:
-              loaded.allowCustomCharacteristics ??
-              DEFAULT_CATALOG_SETTINGS.allowCustomCharacteristics,
-
-            requireDimensions:
-              loaded.requireDimensions ??
-              DEFAULT_CATALOG_SETTINGS.requireDimensions,
-
-            requirePrice:
-              loaded.requirePrice ??
-              DEFAULT_CATALOG_SETTINGS.requirePrice,
-          };
+        const normalizedCatalogSettings =
+          normalizeCatalogSettings(
+            tenantWithCatalog.catalogSettings,
+          );
 
         setCatalogSettings(
           cloneCatalogSettings(
@@ -323,15 +350,25 @@ const TenantProvider = ({
           caughtError,
         );
 
+        if (!mounted) {
+          return;
+        }
+
         setError(
           "We couldn't load this workspace.",
         );
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     void loadTenant();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   /* =======================================================
@@ -412,7 +449,8 @@ const TenantProvider = ({
         saved.mutedColor ||
       current.mutedForeground !==
         saved.mutedForeground ||
-      current.logoUrl !== saved.logoUrl
+      current.logoUrl !==
+        saved.logoUrl
     );
   };
 
@@ -432,25 +470,17 @@ const TenantProvider = ({
     settings: Partial<TenantCatalogSettings>,
   ) => {
     setCatalogSettings(
-      (current) => ({
-        ...current,
-
-        ...settings,
-
-        categories:
-          settings.categories ??
-          current.categories,
-
-        characteristics:
-          settings.characteristics ??
-          current.characteristics,
-      }),
+      (current) =>
+        normalizeCatalogSettings({
+          ...current,
+          ...settings,
+        }),
     );
   };
 
-  /* -------------------------------------------------------
-     Update ONE catalog setting
-     ------------------------------------------------------- */
+  /* =======================================================
+     UPDATE ONE SETTING
+     ======================================================= */
 
   const updateCatalogSetting = <
     K extends keyof TenantCatalogSettings,
@@ -459,16 +489,17 @@ const TenantProvider = ({
     value: TenantCatalogSettings[K],
   ) => {
     setCatalogSettings(
-      (current) => ({
-        ...current,
-        [key]: value,
-      }),
+      (current) =>
+        normalizeCatalogSettings({
+          ...current,
+          [key]: value,
+        }),
     );
   };
 
-  /* -------------------------------------------------------
-     Toggle category
-     ------------------------------------------------------- */
+  /* =======================================================
+     TOGGLE CATEGORY
+     ======================================================= */
 
   const toggleCatalogCategory = (
     category: ProductCategory,
@@ -476,15 +507,12 @@ const TenantProvider = ({
     setCatalogSettings(
       (current) => {
         const categories =
-          current.categories ??
-          [];
+          current.categories ?? [];
 
         const exists =
-          categories.includes(
-            category,
-          );
+          categories.includes(category);
 
-        return {
+        return normalizeCatalogSettings({
           ...current,
 
           categories: exists
@@ -496,36 +524,40 @@ const TenantProvider = ({
                 ...categories,
                 category,
               ],
-        };
+        });
       },
     );
   };
 
-  /* -------------------------------------------------------
-     Characteristics
-     ------------------------------------------------------- */
+  /* =======================================================
+     CHARACTERISTICS
+     ======================================================= */
 
   const setCatalogCharacteristics = (
     characteristics: TenantCharacteristic[],
   ) => {
     setCatalogSettings(
-      (current) => ({
-        ...current,
+      (current) =>
+        normalizeCatalogSettings({
+          ...current,
 
-        characteristics:
-          cloneCharacteristics(
-            characteristics,
-          ),
-      }),
+          characteristics:
+            cloneCharacteristics(
+              characteristics,
+            ),
+        }),
     );
   };
 
-  /* -------------------------------------------------------
-     Save catalog settings
-     ------------------------------------------------------- */
+  /* =======================================================
+     SAVE CATALOG SETTINGS
+     ======================================================= */
 
   const saveCatalogSettings = async () => {
-    if (isSavingCatalog) {
+    if (
+      isSavingCatalog ||
+      !tenant
+    ) {
       return;
     }
 
@@ -533,22 +565,59 @@ const TenantProvider = ({
       setIsSavingCatalog(true);
 
       /*
-       * Backend persistence will be connected here.
+       * TEMPORARY FRONTEND PERSISTENCE BOUNDARY
        *
-       * Example:
+       * This is intentionally isolated here.
+       *
+       * The backend service will replace this section
+       * with:
        *
        * await updateTenantCatalogSettings(
        *   catalogSettings,
        * );
+       *
+       * Once that service exists, the returned server
+       * representation should become the saved state.
        */
 
-      /*
-       * For now we treat the current settings
-       * as persisted locally.
-       */
-      setSavedCatalogSettings(
+      const normalized =
         cloneCatalogSettings(
           catalogSettings,
+        );
+
+      /*
+       * Keep the tenant object synchronized with the
+       * catalog settings as well.
+       *
+       * This means any frontend consumer reading tenant
+       * data during the current session sees the same
+       * configuration.
+       */
+
+      setTenant(
+        (currentTenant) => {
+          if (!currentTenant) {
+            return currentTenant;
+          }
+
+          return {
+            ...currentTenant,
+
+            catalogSettings:
+              normalized,
+          } as Tenant & {
+            catalogSettings: TenantCatalogSettings;
+          };
+        },
+      );
+
+      setCatalogSettings(
+        normalized,
+      );
+
+      setSavedCatalogSettings(
+        cloneCatalogSettings(
+          normalized,
         ),
       );
     } finally {
@@ -556,9 +625,9 @@ const TenantProvider = ({
     }
   };
 
-  /* -------------------------------------------------------
-     Reset catalog settings
-     ------------------------------------------------------- */
+  /* =======================================================
+     RESET
+     ======================================================= */
 
   const resetCatalogSettings = () => {
     setCatalogSettings(
@@ -568,9 +637,9 @@ const TenantProvider = ({
     );
   };
 
-  /* -------------------------------------------------------
-     Detect changes
-     ------------------------------------------------------- */
+  /* =======================================================
+     DETECT CHANGES
+     ======================================================= */
 
   const hasUnsavedCatalogChanges =
     useMemo(() => {
