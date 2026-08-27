@@ -16,6 +16,7 @@ import CatalogPage from "../features/catalog/pages/CatalogPage";
 import ProductDetailsPage from "../features/catalog/pages/ProductDetailsPage";
 import CreateProductPage from "../features/catalog/pages/CreateProductPage";
 import ProductReviewPage from "../features/catalog/pages/ProductReviewPage";
+import CatalogSettingsPage from "../features/catalog/pages/CatalogSettingsPage";
 
 const router = createBrowserRouter([
   /*
@@ -100,7 +101,7 @@ const router = createBrowserRouter([
        */
 
       {
-        path: "catalog/:slug",
+        path: "catalog/products/:slug",
         element: <ProductDetailsPage />,
       },
 
@@ -147,7 +148,10 @@ const router = createBrowserRouter([
         path: "settings",
         element: <SettingsPage />,
       },
-
+      {
+        path: "/settings/catalog",
+        element: <CatalogSettingsPage />,
+      },
       {
         path: "settings/branding",
         element: <BrandingPage />,

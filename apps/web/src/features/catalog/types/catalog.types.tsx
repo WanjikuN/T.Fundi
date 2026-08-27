@@ -17,10 +17,7 @@ export type ProductCategory =
    PRODUCT STATUS
    ========================================================= */
 
-export type ProductStatus =
-  | "draft"
-  | "active"
-  | "archived";
+export type ProductStatus = "draft" | "active" | "archived";
 
 /* =========================================================
    PRODUCT GENERATION STATUS
@@ -200,21 +197,54 @@ export type TenantCharacteristic = {
  * GET /api/tenant/catalog-settings
  */
 
+
 export type TenantCatalogSettings = {
+  /**
+   * Tenant-defined characteristics used by:
+   *
+   * - Product creation
+   * - AI analysis
+   * - Product review
+   * - Product options
+   * - Product variants
+   */
   characteristics: TenantCharacteristic[];
 
+  /**
+   * Categories enabled for this tenant.
+   */
   categories?: ProductCategory[];
 
+  /**
+   * Currency used for new products.
+   */
   defaultCurrency?: string;
 
+  /**
+   * Whether the tenant can create categories
+   * outside the standard catalog categories.
+   */
   allowCustomCategories?: boolean;
 
+  /**
+   * Whether the tenant can create characteristics
+   * outside the configured characteristics.
+   */
   allowCustomCharacteristics?: boolean;
 
+  /**
+   * Whether products must have dimensions
+   * before they can be published.
+   */
   requireDimensions?: boolean;
 
+  /**
+   * Whether products must have a price
+   * before they can be published.
+   */
   requirePrice?: boolean;
 };
+
 
 /* =========================================================
    PRODUCT IMAGE
@@ -256,10 +286,7 @@ export type ProductImage = {
    PRODUCT MEDIA
    ========================================================= */
 
-export type ProductMediaType =
-  | "image"
-  | "360"
-  | "model3d";
+export type ProductMediaType = "image" | "360" | "model3d";
 
 export type ProductMedia = {
   id: string;
@@ -449,7 +476,8 @@ export type Product = {
   price: number;
 
   currency: string;
-
+  updatedAt?: string;
+  quantity: number;
   /**
    * Primary product image.
    */
@@ -680,7 +708,7 @@ export type CreateProductInput = {
   price: number;
 
   currency: string;
-
+  quantity: number;
   dimensions?: ProductDimensions;
 
   /**
