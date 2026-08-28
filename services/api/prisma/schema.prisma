@@ -6,6 +6,12 @@ datasource db {
   provider = "postgresql"
 }
 
+/**
+ * =========================================================
+ * ENUMS
+ * =========================================================
+ */
+
 enum UserStatus {
   ACTIVE
   SUSPENDED
@@ -26,6 +32,18 @@ enum TenantStatus {
   ARCHIVED
 }
 
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+/**
+ * =========================================================
+ * USER
+ * =========================================================
+ */
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -34,8 +52,6 @@ model User {
   lastName     String
   status       UserStatus @default(ACTIVE)
 
-  // Platform-level access.
-  // Null means this user is not a T.Fundi platform administrator.
   platformRole PlatformRole?
 
   memberships   TenantMembership[]
@@ -44,6 +60,12 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+/**
+ * =========================================================
+ * REFRESH TOKEN
+ * =========================================================
+ */
 
 model RefreshToken {
   id        String @id @default(uuid())
@@ -61,13 +83,24 @@ model RefreshToken {
   @@index([expiresAt])
 }
 
+/**
+ * =========================================================
+ * TENANT
+ * =========================================================
+ */
+
 model Tenant {
   id     String       @id @default(uuid())
   name   String
   slug   String       @unique
   status TenantStatus @default(PENDING)
 
-  // Tenant branding
+  /**
+   * ---------------------------------------------------------
+   * Tenant branding
+   * ---------------------------------------------------------
+   */
+
   primaryColor        String  @default("#8B4513")
   primaryForeground   String  @default("#FFFFFF")
   secondaryColor      String  @default("#F5E6D3")
@@ -80,12 +113,215 @@ model Tenant {
   mutedForeground     String  @default("#6B7280")
   logoUrl             String?
 
+  /**
+   * ---------------------------------------------------------
+   * Relations
+   * ---------------------------------------------------------
+   */
+
   memberships TenantMembership[]
   roles       Role[]
+  products    Product[]
+
+  catalogSettings TenantCatalogSettings?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+/**
+ * =========================================================
+ * TENANT CATALOG SETTINGS
+ * =========================================================
+ * One catalog configuration per tenant.
+ * Stores:
+ * - enabled categories
+ * - default currency
+ * - custom category permissions
+ * - custom characteristic permissions
+ * - required dimensions
+ * - required price
+ * Characteristics are stored relationally so they persist
+ * independently and can be used by product creation and AI.
+ */
+
+model TenantCatalogSettings {
+  id       String @id @default(uuid())
+  tenantId String @unique
+
+  /**
+   * Enabled catalog categories.
+   * Example:
+   * ["sofas", "chairs", "tables"]
+   */
+
+  categories Json?
+
+  /**
+   * Catalog behaviour.
+   */
+
+  defaultCurrency String @default("KES")
+
+  allowCustomCategories      Boolean @default(false)
+  allowCustomCharacteristics Boolean @default(false)
+
+  requireDimensions Boolean @default(false)
+  requirePrice      Boolean @default(false)
+
+  /**
+   * Tenant-defined product characteristics.
+   */
+
+  characteristics TenantCharacteristic[]
+
+  /**
+   * Tenant relation.
+   */
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/**
+ * =========================================================
+ * TENANT CHARACTERISTIC
+ * =========================================================
+ * Examples:
+ * Wood Species
+ * Upholstery
+ * Leg Style
+ * Cushion Density
+ * Frame Type
+ * Finish
+ * Configuration
+ */
+
+model TenantCharacteristic {
+  id         String @id @default(uuid())
+  settingsId String
+
+  /**
+   * Tenant-defined display name.
+   */
+
+  name String
+
+  /**
+   * Frontend characteristic type.
+   * select
+   * color
+   * text
+   * number
+   * image
+   * material
+   * finish
+   * size
+   */
+
+  type String
+
+  description String?
+
+  required Boolean @default(false)
+
+  /**
+   * Controls display order.
+   */
+
+  sequence Int @default(0)
+
+  /**
+   * Whether this characteristic is available
+   * for product creation.
+   */
+
+  active Boolean @default(true)
+
+  /**
+   * Configured values.
+   */
+
+  values TenantCharacteristicValue[]
+
+  /**
+   * Parent catalog settings.
+   */
+
+  settings TenantCatalogSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([settingsId])
+  @@index([settingsId, sequence])
+}
+
+/**
+ * =========================================================
+ * TENANT CHARACTERISTIC VALUE
+ * =========================================================
+ * Example:
+ * Wood Species
+ * - Walnut
+ * - Oak
+ * - Mahogany
+ * Upholstery
+ * - Charcoal
+ * - Cream
+ * - Navy
+ */
+
+model TenantCharacteristicValue {
+  id               String @id @default(uuid())
+  characteristicId String
+
+  name        String
+  description String?
+
+  /**
+   * Optional colour representation.
+   */
+
+  hexCode String?
+
+  /**
+   * Primary image representing this value.
+   */
+
+  imageUrl String?
+
+  /**
+   * Additional images.
+   */
+
+  images Json?
+
+  /**
+   * Whether this value is available.
+   */
+
+  active Boolean @default(true)
+
+  /**
+   * Parent characteristic.
+   */
+
+  characteristic TenantCharacteristic @relation(fields: [characteristicId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([characteristicId])
+}
+
+/**
+ * =========================================================
+ * TENANT MEMBERSHIP
+ * =========================================================
+ */
 
 model TenantMembership {
   id       String @id @default(uuid())
@@ -101,7 +337,15 @@ model TenantMembership {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, tenantId])
+  @@index([tenantId])
+  @@index([roleId])
 }
+
+/**
+ * =========================================================
+ * ROLE
+ * =========================================================
+ */
 
 model Role {
   id       String @id @default(uuid())
@@ -116,7 +360,14 @@ model Role {
   updatedAt DateTime @updatedAt
 
   @@unique([tenantId, name])
+  @@index([tenantId])
 }
+
+/**
+ * =========================================================
+ * PERMISSION
+ * =========================================================
+ */
 
 model Permission {
   id          String  @id @default(uuid())
@@ -129,6 +380,12 @@ model Permission {
   updatedAt DateTime @updatedAt
 }
 
+/**
+ * =========================================================
+ * ROLE PERMISSION
+ * =========================================================
+ */
+
 model RolePermission {
   roleId       String
   permissionId String
@@ -137,4 +394,107 @@ model RolePermission {
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+/**
+ * =========================================================
+ * PRODUCT
+ * =========================================================
+ */
+
+model Product {
+  id       String @id @default(uuid())
+  tenantId String
+
+  /**
+   * ---------------------------------------------------------
+   * Basic product information
+   * ---------------------------------------------------------
+   */
+
+  name        String
+  slug        String
+  description String
+
+  category String?
+
+  /**
+   * ---------------------------------------------------------
+   * Pricing
+   * ---------------------------------------------------------
+   */
+
+  price    Decimal @db.Decimal(12, 2)
+  currency String  @default("KES")
+
+  /**
+   * ---------------------------------------------------------
+   * Inventory
+   * ---------------------------------------------------------
+   */
+
+  quantity Int @default(0)
+
+  /**
+   * ---------------------------------------------------------
+   * Media
+   * ---------------------------------------------------------
+   */
+
+  imageUrl   String?
+  images     Json?
+  media      Json?
+  model3DUrl String?
+
+  /**
+   * ---------------------------------------------------------
+   * Product configuration
+   * ---------------------------------------------------------
+   */
+
+  dimensions Json?
+  options    Json?
+  variants   Json?
+
+  /**
+   * ---------------------------------------------------------
+   * Status
+   * ---------------------------------------------------------
+   */
+
+  status ProductStatus @default(DRAFT)
+
+  /**
+   * ---------------------------------------------------------
+   * Tenant relation
+   * ---------------------------------------------------------
+   */
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /**
+   * ---------------------------------------------------------
+   * Product uniqueness
+   * ---------------------------------------------------------
+   * Product names are unique within a tenant.
+   * Tenant A:
+   * Luna Sofa
+   * Tenant B:
+   * Luna Sofa
+   * Both are allowed.
+   */
+
+  /**
+   * Slugs are also unique within a tenant.
+   */
+
+  @@unique([tenantId, name])
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, category])
 }

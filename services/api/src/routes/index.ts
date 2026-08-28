@@ -1,6 +1,9 @@
 import { Router } from "express";
 
 import authRoutes from "../features/auth/auth.routes.js";
+
+import catalogRoutes from "../features/catalog/catalog.routes.js";
+
 import tenantRoutes from "../features/tenant/tenant.routes.js";
 
 const router = Router();
@@ -12,7 +15,19 @@ router.get("/", (_req, res) => {
   });
 });
 
-router.use("/auth", authRoutes);
-router.use("/tenant", tenantRoutes);
+router.use(
+  "/auth",
+  authRoutes,
+);
+
+router.use(
+  "/tenant",
+  tenantRoutes,
+);
+
+router.use(
+  "/catalog",
+  catalogRoutes,
+);
 
 export { router };

@@ -1,42 +1,219 @@
-export type UserStatus =
-  | "ACTIVE"
-  | "SUSPENDED"
-  | "DEACTIVATED";
+/* =========================================================
+   CATALOG TYPES
+   ========================================================= */
 
-export type PlatformRole =
-  | "PLATFORM_OWNER"
-  | "PLATFORM_ADMIN"
-  | "PLATFORM_OPERATIONS"
-  | "PLATFORM_SUPPORT"
-  | null;
+export const PRODUCT_CATEGORIES = [
+  "sofas",
+  "chairs",
+  "tables",
+  "beds",
+  "storage",
+  "desks",
+  "lighting",
+  "outdoor",
+  "other",
+] as const;
 
-export interface User {
+export type ProductCategory =
+  (typeof PRODUCT_CATEGORIES)[number];
+
+/* =========================================================
+   CHARACTERISTICS
+   ========================================================= */
+
+export const TENANT_CHARACTERISTIC_TYPES = [
+  "select",
+  "color",
+  "text",
+  "number",
+  "image",
+  "material",
+  "finish",
+  "size",
+] as const;
+
+export type TenantCharacteristicType =
+  (typeof TENANT_CHARACTERISTIC_TYPES)[number];
+
+export interface TenantCharacteristicValue {
   id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  status: UserStatus;
-  platformRole: PlatformRole;
-  createdAt: string;
+  name: string;
+  description?: string | null;
+  hexCode?: string | null;
+  imageUrl?: string | null;
+  images?: string[];
+  active: boolean;
 }
 
-export interface LoginInput {
-  email: string;
-  password: string;
+export interface TenantCharacteristic {
+  id: string;
+  name: string;
+  type: TenantCharacteristicType;
+  description?: string | null;
+  required: boolean;
+  sequence: number;
+  active: boolean;
+  values: TenantCharacteristicValue[];
 }
 
-export interface RegisterInput {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  tenantName: string;
-  tenantSlug: string;
+/* =========================================================
+   CATALOG SETTINGS
+   ========================================================= */
+
+export interface TenantCatalogSettings {
+  categories: ProductCategory[];
+
+  characteristics: TenantCharacteristic[];
+
+  defaultCurrency: string;
+
+  allowCustomCategories: boolean;
+
+  allowCustomCharacteristics: boolean;
+
+  requireDimensions: boolean;
+
+  requirePrice: boolean;
 }
 
-export interface AuthResponse {
-  message: string;
-  accessToken: string;
-  refreshToken: string;
-  user: User;
+/* =========================================================
+   PRODUCT CHARACTERISTIC VALUE
+   ========================================================= */
+
+export interface ProductCharacteristicValue {
+  characteristicId: string;
+
+  characteristicName: string;
+
+  type: TenantCharacteristicType;
+
+  value: string | number;
+
+  label?: string;
+
+  hexCode?: string;
+
+  imageUrl?: string;
+}
+
+/* =========================================================
+   PRODUCT OPTION
+   ========================================================= */
+
+export interface ProductOption {
+  id: string;
+
+  name: string;
+
+  type: TenantCharacteristicType;
+
+  required: boolean;
+
+  values: TenantCharacteristicValue[];
+}
+
+/* =========================================================
+   DIMENSIONS
+   ========================================================= */
+
+export interface ProductDimensions {
+  width: number;
+  depth: number;
+  height: number;
+  unit: "cm" | "mm" | "m" | "in";
+}
+
+/* =========================================================
+   PRODUCT MEDIA
+   ========================================================= */
+
+export interface ProductImage {
+  id: string;
+
+  url: string;
+
+  alt?: string;
+
+  sequence: number;
+
+  isPrimary: boolean;
+}
+
+/* =========================================================
+   PRODUCT STATUS
+   ========================================================= */
+
+export type ProductStatus =
+  | "draft"
+  | "active"
+  | "archived";
+
+/* =========================================================
+   PRODUCT
+   ========================================================= */
+
+export interface Product {
+  id: string;
+
+  tenantId: string;
+
+  name: string;
+
+  slug: string;
+
+  description: string;
+
+  category: ProductCategory | string | null;
+
+  price: number;
+
+  currency: string;
+
+  quantity: number;
+
+  imageUrl?: string | null;
+
+  images: ProductImage[];
+
+  media?: unknown;
+
+  model3DUrl?: string | null;
+
+  dimensions?: ProductDimensions | null;
+
+  options: ProductOption[];
+
+  characteristics: ProductCharacteristicValue[];
+
+  variants?: unknown[];
+
+  status: ProductStatus;
+
+  createdAt?: string;
+
+  updatedAt?: string;
+}
+
+/* =========================================================
+   AI
+   ========================================================= */
+
+export interface AIProductAnalysis {
+  name: string;
+
+  description: string;
+
+  category: string;
+
+  price?: number;
+
+  currency?: string;
+
+  dimensions?: ProductDimensions;
+
+  characteristics: ProductCharacteristicValue[];
+
+  confidence?: number;
+
+  reasoning?: string;
 }
