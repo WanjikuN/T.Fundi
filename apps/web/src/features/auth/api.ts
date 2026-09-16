@@ -2,6 +2,7 @@ import type {
   AuthResponse,
   LoginInput,
   RegisterInput,
+  ForgotPasswordInput,
 } from "./types";
 
 const API_BASE_URL =
@@ -38,7 +39,14 @@ export async function login(
     body: JSON.stringify(input),
   });
 }
-
+export async function requestPasswordReset(
+  input: ForgotPasswordInput,
+): Promise<void> {
+  await request<void>("/api/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
 export async function register(
   input: RegisterInput,
 ): Promise<AuthResponse> {

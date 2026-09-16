@@ -11,6 +11,8 @@ import SettingsPage from "../features/identity/pages/SettingsPage";
 import BrandingPage from "../features/tenant/pages/BrandingPage";
 
 import LoginPage from "../features/auth/pages/LoginPage";
+import RegisterPage from "../features/auth/pages/RegisterPage";
+import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
 
 import CatalogPage from "../features/catalog/pages/CatalogPage";
 import ProductDetailsPage from "../features/catalog/pages/ProductDetailsPage";
@@ -25,10 +27,26 @@ const router = createBrowserRouter([
    * =========================================================
    */
 
-  {
-    path: "/login",
-    element: <LoginPage />,
-  },
+ /*
+ * =========================================================
+ * PUBLIC AUTH ROUTES
+ * =========================================================
+ */
+
+{
+  path: "/login",
+  element: <LoginPage />,
+},
+
+{
+  path: "/register",
+  element: <RegisterPage />,
+},
+
+{
+  path: "/forgot-password",
+  element: <ForgotPasswordPage />,
+},
 
   /*
    * =========================================================
