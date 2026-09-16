@@ -412,7 +412,7 @@ export default function LoginPage() {
         color: foregroundColor,
       }}
     >
-      <div className="grid min-h-screen lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="grid min-h-screen lg:grid-cols-[1.15fr_1fr]">
         {/* =====================================================
             LEFT BRAND / EXPERIENCE PANEL
         ====================================================== */}
