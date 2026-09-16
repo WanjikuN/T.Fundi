@@ -17,4 +17,5 @@ export interface Tenant {
   name: string;
   slug: string;
   branding: TenantBranding;
+  verticalKey: string;
 }
