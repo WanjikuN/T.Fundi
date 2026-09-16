@@ -14,7 +14,6 @@ import {
   ShoppingBag,
   Factory,
   Layers3,
-  BarChart3,
   WandSparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
