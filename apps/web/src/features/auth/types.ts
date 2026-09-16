@@ -1,4 +1,40 @@
 /* =========================================================
+   AUTH TYPES
+   ========================================================= */
+
+export interface User {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  role?: string;
+  tenantId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface RegisterInput {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  tenantId?: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  accessToken: string;
+  refreshToken: string | null;
+}
+
+/* =========================================================
    CATALOG TYPES
    ========================================================= */
 
@@ -62,17 +98,11 @@ export interface TenantCharacteristic {
 
 export interface TenantCatalogSettings {
   categories: ProductCategory[];
-
   characteristics: TenantCharacteristic[];
-
   defaultCurrency: string;
-
   allowCustomCategories: boolean;
-
   allowCustomCharacteristics: boolean;
-
   requireDimensions: boolean;
-
   requirePrice: boolean;
 }
 
@@ -82,17 +112,11 @@ export interface TenantCatalogSettings {
 
 export interface ProductCharacteristicValue {
   characteristicId: string;
-
   characteristicName: string;
-
   type: TenantCharacteristicType;
-
   value: string | number;
-
   label?: string;
-
   hexCode?: string;
-
   imageUrl?: string;
 }
 
@@ -102,13 +126,9 @@ export interface ProductCharacteristicValue {
 
 export interface ProductOption {
   id: string;
-
   name: string;
-
   type: TenantCharacteristicType;
-
   required: boolean;
-
   values: TenantCharacteristicValue[];
 }
 
@@ -129,13 +149,9 @@ export interface ProductDimensions {
 
 export interface ProductImage {
   id: string;
-
   url: string;
-
   alt?: string;
-
   sequence: number;
-
   isPrimary: boolean;
 }
 
@@ -154,43 +170,24 @@ export type ProductStatus =
 
 export interface Product {
   id: string;
-
   tenantId: string;
-
   name: string;
-
   slug: string;
-
   description: string;
-
   category: ProductCategory | string | null;
-
   price: number;
-
   currency: string;
-
   quantity: number;
-
   imageUrl?: string | null;
-
   images: ProductImage[];
-
   media?: unknown;
-
   model3DUrl?: string | null;
-
   dimensions?: ProductDimensions | null;
-
   options: ProductOption[];
-
   characteristics: ProductCharacteristicValue[];
-
   variants?: unknown[];
-
   status: ProductStatus;
-
   createdAt?: string;
-
   updatedAt?: string;
 }
 
@@ -200,20 +197,12 @@ export interface Product {
 
 export interface AIProductAnalysis {
   name: string;
-
   description: string;
-
   category: string;
-
   price?: number;
-
   currency?: string;
-
   dimensions?: ProductDimensions;
-
   characteristics: ProductCharacteristicValue[];
-
   confidence?: number;
-
   reasoning?: string;
 }
