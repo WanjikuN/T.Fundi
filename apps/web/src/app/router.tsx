@@ -6,6 +6,8 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import AIStudioPage from "../features/ai-studio/pages/AIStudioPage";
 import WorkshopPage from "../features/workshop/pages/WorkshopPage";
+import WorkshopJobDetailsPage from "../features/workshop/pages/WorkshopJobDetailsPage";
+
 import SettingsPage from "../features/identity/pages/SettingsPage";
 import BrandingPage from "../features/tenant/pages/BrandingPage";
 
@@ -159,7 +161,10 @@ const router = createBrowserRouter([
         path: "workshop",
         element: <WorkshopPage />,
       },
-
+      {
+        path: "workshop/:jobId",
+        element: <WorkshopJobDetailsPage />,
+      },
       /*
        * =======================================================
        * SETTINGS
