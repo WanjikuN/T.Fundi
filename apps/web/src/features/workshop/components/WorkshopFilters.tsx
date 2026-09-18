@@ -37,7 +37,7 @@ const WorkshopFilters = ({
       <div className="relative min-w-0 flex-1">
         <Search
           size={17}
-          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-muted-foreground)]"
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-primary)]"
         />
 
         <input
@@ -46,7 +46,7 @@ const WorkshopFilters = ({
             onSearchChange(event.target.value)
           }
           placeholder="Search jobs, orders or customers..."
-          className="h-11 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] pl-10 pr-10 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10"
+          className="h-11 w-full rounded-xl border border-[var(--color-primary)] bg-[var(--color-background)] pl-10 pr-10 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/10"
         />
 
         {search && (
@@ -67,7 +67,7 @@ const WorkshopFilters = ({
             event.target.value as "all" | WorkshopJobStatus,
           )
         }
-        className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 text-sm outline-none focus:border-[var(--color-primary)]"
+        className="h-11 rounded-xl border border-[var(--color-primary)] bg-[var(--color-background)] px-4 text-sm outline-none focus:border-[var(--color-primary)]"
       >
         <option value="all">All statuses</option>
         <option value="not_started">Not started</option>
@@ -86,7 +86,7 @@ const WorkshopFilters = ({
               | WorkshopPriority,
           )
         }
-        className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 text-sm outline-none focus:border-[var(--color-primary)]"
+        className="h-11 rounded-xl border border-[var(--color-primary)] bg-[var(--color-background)] px-4 text-sm outline-none focus:border-[var(--color-primary)]"
       >
         <option value="all">All priorities</option>
         <option value="low">Low</option>

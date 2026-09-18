@@ -84,9 +84,9 @@ const WorkshopPage = () => {
           <button
             type="button"
             onClick={() => void loadJobs()}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 text-sm font-medium transition hover:bg-[var(--color-muted)]"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--color-primary)] px-3 text-sm font-medium transition hover:bg-[var(--color-muted)]"
           >
-            <RefreshCw size={15} />
+            <RefreshCw size={15} className="text-[var(--color-primary)]"/>
             Refresh
           </button>
 
@@ -126,7 +126,11 @@ const WorkshopPage = () => {
           </p>
         </div>
       ) : (
-        <WorkshopBoard jobs={filteredJobs} />
+        <WorkshopBoard
+          jobs={filteredJobs}
+          employees={[]}
+          onSave={async () => {}}
+        />
       )}
     </div>
   );

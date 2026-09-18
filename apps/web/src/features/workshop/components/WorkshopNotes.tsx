@@ -7,7 +7,7 @@ type Props = {
 
 const WorkshopNotes = ({ notes }: Props) => {
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] p-5">
+    <div className="rounded-2xl border border-[var(--color-secondary)] p-5">
       <div className="flex items-center gap-2">
         <MessageSquare size={17} />
 

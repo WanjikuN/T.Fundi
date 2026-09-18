@@ -61,7 +61,7 @@ const WorkshopSummaryCards = ({ jobs }: Props) => {
       {metrics.map(({ label, value, icon: Icon }) => (
         <div
           key={label}
-          className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-4"
+          className="flex items-center gap-3 rounded-2xl  border-[var(--color-border)] bg-[var(--color-background)] px-4 py-1"
         >
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-muted)]">
             <Icon size={17} />

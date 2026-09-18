@@ -7,7 +7,7 @@ type Props = {
 
 const WorkshopAssignment = ({ employee }: Props) => {
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] p-5">
+    <div className="rounded-2xl  shadow-md bg-[var(--color-secondary)] p-5">
       <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted-foreground)]">
         Assigned to
       </p>

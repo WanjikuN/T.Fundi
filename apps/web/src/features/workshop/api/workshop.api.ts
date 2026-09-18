@@ -256,3 +256,50 @@ export const updateWorkshopStage = async (
 
   return job;
 };
+export const updateWorkshopAssignment = async (
+  jobId: string,
+  employeeId?: string,
+): Promise<WorkshopJob | null> => {
+  await new Promise((resolve) => setTimeout(resolve, 200));
+
+  const job = mockJobs.find((item) => item.id === jobId);
+
+  if (!job) return null;
+
+  if (!employeeId) {
+    job.assignedTo = undefined;
+  } else {
+    const employee = employees.find(
+      (item) => item.id === employeeId,
+    );
+
+    if (!employee) return job;
+
+    job.assignedTo = employee;
+  }
+
+  job.updatedAt = new Date().toISOString();
+
+  return job;
+};
+export const addWorkshopNote = async (
+  jobId: string,
+  content: string,
+): Promise<WorkshopJob | null> => {
+  await new Promise((resolve) => setTimeout(resolve, 200));
+
+  const job = mockJobs.find((item) => item.id === jobId);
+
+  if (!job) return null;
+
+  job.notes.unshift({
+    id: `note-${Date.now()}`,
+    content,
+    createdBy: "Current User",
+    createdAt: new Date().toISOString(),
+  });
+
+  job.updatedAt = new Date().toISOString();
+
+  return job;
+};
