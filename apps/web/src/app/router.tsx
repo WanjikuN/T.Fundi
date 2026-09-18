@@ -5,8 +5,9 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 
 import DashboardPage from "../features/dashboard/pages/DashboardPage";
 import AIStudioPage from "../features/ai-studio/pages/AIStudioPage";
-import OrdersPage from "../features/commerce/pages/OrdersPage";
 import WorkshopPage from "../features/workshop/pages/WorkshopPage";
+import WorkshopJobDetailsPage from "../features/workshop/pages/WorkshopJobDetailsPage";
+
 import SettingsPage from "../features/identity/pages/SettingsPage";
 import BrandingPage from "../features/tenant/pages/BrandingPage";
 
@@ -20,6 +21,8 @@ import CreateProductPage from "../features/catalog/pages/CreateProductPage";
 import ProductReviewPage from "../features/catalog/pages/ProductReviewPage";
 import CatalogSettingsPage from "../features/catalog/pages/CatalogSettingsPage";
 
+import OrdersPage from "../features/orders/pages/OrdersPage";
+import OrderDetailsPage from "../features/orders/pages/OrderDetailsPage";
 const router = createBrowserRouter([
   /*
    * =========================================================
@@ -27,26 +30,26 @@ const router = createBrowserRouter([
    * =========================================================
    */
 
- /*
- * =========================================================
- * PUBLIC AUTH ROUTES
- * =========================================================
- */
+  /*
+   * =========================================================
+   * PUBLIC AUTH ROUTES
+   * =========================================================
+   */
 
-{
-  path: "/login",
-  element: <LoginPage />,
-},
+  {
+    path: "/login",
+    element: <LoginPage />,
+  },
 
-{
-  path: "/register",
-  element: <RegisterPage />,
-},
+  {
+    path: "/register",
+    element: <RegisterPage />,
+  },
 
-{
-  path: "/forgot-password",
-  element: <ForgotPasswordPage />,
-},
+  {
+    path: "/forgot-password",
+    element: <ForgotPasswordPage />,
+  },
 
   /*
    * =========================================================
@@ -144,7 +147,10 @@ const router = createBrowserRouter([
         path: "orders",
         element: <OrdersPage />,
       },
-
+      {
+        path: "orders/:orderId",
+        element: <OrderDetailsPage />,
+      },
       /*
        * =======================================================
        * WORKSHOP
@@ -155,7 +161,10 @@ const router = createBrowserRouter([
         path: "workshop",
         element: <WorkshopPage />,
       },
-
+      {
+        path: "workshop/:jobId",
+        element: <WorkshopJobDetailsPage />,
+      },
       /*
        * =======================================================
        * SETTINGS
