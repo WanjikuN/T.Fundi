@@ -1,4 +1,4 @@
-import type { Order } from "../types/orders.types";
+import type { Order, OrderStatus} from "../types/orders.types";
 
 const mockOrders: Order[] = [
   {
@@ -149,4 +149,42 @@ export const getOrderById = async (
   await new Promise((resolve) => setTimeout(resolve, 200));
 
   return mockOrders.find((order) => order.id === orderId) ?? null;
+};
+
+export const updateOrderStatus = async (
+  orderId: string,
+  status: OrderStatus,
+): Promise<Order | null> => {
+  await new Promise((resolve) =>
+    setTimeout(resolve, 200),
+  );
+
+  const order = mockOrders.find(
+    (item) => item.id === orderId,
+  );
+
+  if (!order) {
+    return null;
+  }
+
+  order.orderStatus = status;
+  order.updatedAt = new Date().toISOString();
+
+  if (status === "in_production") {
+    order.fulfillmentStatus = "in_production";
+  }
+
+  if (status === "ready") {
+    order.fulfillmentStatus = "ready";
+  }
+
+  if (status === "out_for_delivery") {
+    order.fulfillmentStatus = "out_for_delivery";
+  }
+
+  if (status === "delivered") {
+    order.fulfillmentStatus = "delivered";
+  }
+
+  return order;
 };
