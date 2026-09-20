@@ -23,6 +23,9 @@ import CatalogSettingsPage from "../features/catalog/pages/CatalogSettingsPage";
 
 import OrdersPage from "../features/orders/pages/OrdersPage";
 import OrderDetailsPage from "../features/orders/pages/OrderDetailsPage";
+import OrderTrackingPage from "../features/orders/pages/OrderTrackingPage";
+import ProductIntelligencePage from "../features/ai-studio/pages/ProductIntelligencePage";
+import RoomVisualizerPage from "../features/ai-studio/pages/RoomVisualizerPage";
 const router = createBrowserRouter([
   /*
    * =========================================================
@@ -136,7 +139,11 @@ const router = createBrowserRouter([
         path: "ai-studio",
         element: <AIStudioPage />,
       },
-
+      {
+        path: "ai-studio/product-intelligence",
+        element: <ProductIntelligencePage />,
+      },
+      { path: "ai-studio/room-visualizer", element: <RoomVisualizerPage /> },
       /*
        * =======================================================
        * COMMERCE
@@ -150,6 +157,10 @@ const router = createBrowserRouter([
       {
         path: "orders/:orderId",
         element: <OrderDetailsPage />,
+      },
+      {
+        path: "orders/:orderId/track",
+        element: <OrderTrackingPage />,
       },
       /*
        * =======================================================
