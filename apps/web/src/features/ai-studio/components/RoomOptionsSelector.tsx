@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { Product } from "../../catalog/types/catalog.types";
 
 type Props = {
