@@ -136,7 +136,18 @@ const mockOrders: Order[] = [
     createdAt: "2026-09-10T08:00:00Z",
   },
 ];
-
+const allowedOrderStatusTransitions: Record<
+  OrderStatus,
+  OrderStatus[]
+> = {
+  pending: ["confirmed", "cancelled"],
+  confirmed: ["in_production", "cancelled"],
+  in_production: ["ready", "cancelled"],
+  ready: ["out_for_delivery", "cancelled"],
+  out_for_delivery: ["delivered"],
+  delivered: [],
+  cancelled: [],
+};
 export const getOrders = async (): Promise<Order[]> => {
   await new Promise((resolve) => setTimeout(resolve, 300));
 
@@ -155,35 +166,50 @@ export const updateOrderStatus = async (
   orderId: string,
   status: OrderStatus,
 ): Promise<Order | null> => {
-  await new Promise((resolve) =>
-    setTimeout(resolve, 200),
-  );
+  await new Promise((resolve) => setTimeout(resolve, 200));
 
   const order = mockOrders.find(
     (item) => item.id === orderId,
   );
 
-  if (!order) {
-    return null;
+  if (!order) return null;
+
+  if (order.orderStatus === status) {
+    return order;
+  }
+
+  const allowedStatuses =
+    allowedOrderStatusTransitions[order.orderStatus];
+
+  if (!allowedStatuses.includes(status)) {
+    throw new Error(
+      `Cannot move order from ${order.orderStatus} to ${status}`,
+    );
   }
 
   order.orderStatus = status;
   order.updatedAt = new Date().toISOString();
 
-  if (status === "in_production") {
-    order.fulfillmentStatus = "in_production";
-  }
+  switch (status) {
+    case "in_production":
+      order.fulfillmentStatus = "in_production";
+      break;
 
-  if (status === "ready") {
-    order.fulfillmentStatus = "ready";
-  }
+    case "ready":
+      order.fulfillmentStatus = "ready";
+      break;
 
-  if (status === "out_for_delivery") {
-    order.fulfillmentStatus = "out_for_delivery";
-  }
+    case "out_for_delivery":
+      order.fulfillmentStatus = "out_for_delivery";
+      break;
 
-  if (status === "delivered") {
-    order.fulfillmentStatus = "delivered";
+    case "delivered":
+      order.fulfillmentStatus = "delivered";
+      break;
+
+    case "confirmed":
+      order.fulfillmentStatus = "not_started";
+      break;
   }
 
   return order;

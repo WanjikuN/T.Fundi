@@ -23,6 +23,7 @@ import CatalogSettingsPage from "../features/catalog/pages/CatalogSettingsPage";
 
 import OrdersPage from "../features/orders/pages/OrdersPage";
 import OrderDetailsPage from "../features/orders/pages/OrderDetailsPage";
+import OrderTrackingPage from "../features/orders/pages/OrderTrackingPage";
 const router = createBrowserRouter([
   /*
    * =========================================================
@@ -150,6 +151,10 @@ const router = createBrowserRouter([
       {
         path: "orders/:orderId",
         element: <OrderDetailsPage />,
+      },
+      {
+        path: "orders/:orderId/track",
+        element: <OrderTrackingPage />,
       },
       /*
        * =======================================================
