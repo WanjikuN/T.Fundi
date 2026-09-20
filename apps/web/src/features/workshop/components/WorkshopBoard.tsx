@@ -35,7 +35,7 @@ const stages = [
 
 const WorkshopBoard = ({ jobs, ...jobCardProps }: Props) => {
   return (
-    <div className="overflow-x-auto pb-4">
+    <div className=" lg:overflow-y-scroll h-full lg:h-100 overflow-x-auto pb-4">
       <div className="grid min-w-[1100px] grid-cols-6 gap-4">
         {stages.map((stage) => {
           const stageJobs = jobs.filter(
@@ -50,7 +50,7 @@ const WorkshopBoard = ({ jobs, ...jobCardProps }: Props) => {
                 <span className="rounded-full bg-[var(--color-muted)] px-2 py-0.5 text-xs">
                   {stageJobs.length}
                 </span>
-              </div>
+              </div> 
 
               <div className="space-y-3">
                 {stageJobs.map((job) => (
