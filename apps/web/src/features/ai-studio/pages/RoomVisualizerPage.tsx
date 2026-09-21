@@ -3,6 +3,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+
+import { useTenant } from "../../../app/providers/TenantProvider";
 import {
   generateRoomVisualization,
   getSavedDesigns,
@@ -19,7 +21,6 @@ import type {
   SavedDesign,
   VisualizationResult,
 } from "../types/ai-studio.types";
-import { useTenant } from "../../../app/providers/TenantProvider";
 
 const RoomVisualizerPage = () => {
   const { tenant } = useTenant();
@@ -50,7 +51,7 @@ const RoomVisualizerPage = () => {
 
   if (!tenant) {
     return (
-      <div className="flex h-full items-center justify-center p-6">
+      <div className="flex h-full min-h-0 items-center justify-center p-6">
         <div className="max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-8 text-center">
           <h1 className="text-xl font-semibold">
             Workspace unavailable
@@ -167,7 +168,6 @@ const RoomVisualizerPage = () => {
 
       case "options":
         if (!selectedProduct) {
-          setStep("product");
           return null;
         }
 
@@ -185,7 +185,7 @@ const RoomVisualizerPage = () => {
 
       case "generating":
         return (
-          <div className="flex h-full min-h-[500px] flex-col items-center justify-center text-center">
+          <div className="flex h-full min-h-0 flex-col items-center justify-center text-center">
             <div className="relative mb-7">
               <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
                 <Sparkles
@@ -230,15 +230,27 @@ const RoomVisualizerPage = () => {
     }
   };
 
+  /*
+   * Upload has the Saved Designs section underneath it,
+   * so that stage is allowed to have its own vertical scroll.
+   *
+   * Product/options/generating/preview are viewport-contained.
+   */
+  const isContainedStep =
+    step !== "upload";
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <header className="shrink-0 border-b border-[var(--color-border)] px-6 py-4 lg:px-8">
+      {/* =====================================================
+          PAGE HEADER
+      ====================================================== */}
+      <header className="shrink-0 px-6 py-4 lg:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => window.history.back()}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)]"
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-[var(--color-border)]"
               aria-label="Go back"
             >
               <ArrowLeft size={17} />
@@ -271,10 +283,26 @@ const RoomVisualizerPage = () => {
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-6 py-6 lg:px-8">
-        <div className="mx-auto min-h-full max-w-7xl">
+      {/* =====================================================
+          MAIN WORKSPACE
+      ====================================================== */}
+      <main
+        className={`min-h-0 flex-1 px-6 py-6 lg:px-8 ${
+          isContainedStep
+            ? "overflow-hidden"
+            : "overflow-y-auto"
+        }`}
+      >
+        <div
+          className={`mx-auto max-w-7xl ${
+            isContainedStep
+              ? "h-full min-h-0"
+              : "min-h-full"
+          }`}
+        >
           {renderStep()}
 
+          {/* Saved designs only belong to upload stage */}
           {step === "upload" &&
             savedDesigns.length > 0 && (
               <section className="mt-12 border-t border-[var(--color-border)] pt-8">
@@ -309,8 +337,9 @@ const RoomVisualizerPage = () => {
         </div>
       </main>
 
+      {/* Saving notification */}
       {saving && (
-        <div className="fixed bottom-5 right-5 rounded-xl bg-[var(--color-foreground)] px-4 py-3 text-sm text-[var(--color-background)] shadow-xl">
+        <div className="fixed bottom-5 right-5 z-50 rounded-xl bg-[var(--color-foreground)] px-4 py-3 text-sm text-[var(--color-background)] shadow-xl">
           Saving design...
         </div>
       )}
