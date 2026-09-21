@@ -13,7 +13,7 @@ export type RoomVisualizerStep =
   | "preview";
 
 export type RoomImage = {
- id: string;
+  id: string;
   name: string;
   url: string;
   file?: File;
@@ -38,6 +38,7 @@ export type VisualizationResult = {
   productImageUrl: string;
   selectedOptions: Record<string, string>;
   createdAt: string;
+  productImageWithoutBackgroundUrl?: string;
 };
 
 export type SavedDesign = VisualizationResult & {

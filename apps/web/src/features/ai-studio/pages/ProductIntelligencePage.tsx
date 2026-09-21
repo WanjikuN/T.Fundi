@@ -20,66 +20,151 @@ const UploadStage = ({
   onUpload: (event: ChangeEvent<HTMLInputElement>) => void;
   onAnalyse: () => void;
 }) => (
-  <div className="rounded-3xl border border-black/10 bg-white p-6 shadow-sm">
-    <div className="rounded-2xl border-2 border-dashed border-black/10 p-8 text-center">
+  <div className="rounded-3xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+    {/* Header */}
+    <div className="mb-2">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          {images.length == 0 && (
+            <div className="flex items-center gap-2">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-xl"
+                style={{
+                  backgroundColor:
+                    "color-mix(in srgb, var(--color-primary) 10%, transparent)",
+                  color: "var(--color-primary)",
+                }}
+              >
+                <Sparkles size={18} />
+              </div>
+
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">
+                  Product images
+                </h2>
+
+                <p className="text-xs text-gray-500">
+                  Give AI enough visual information to understand your product.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    {/* Upload area */}
+    <label
+      className={`group relative flex min-h-55 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition ${
+        images.length > 0
+          ? "border-black/10 bg-gray-50/50 hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-primary)]/[0.02]"
+          : "border-[var(--color-primary)]/30 bg-[var(--color-primary)]/[0.025] hover:border-[var(--color-primary)]/50 hover:bg-[var(--color-primary)]/[0.05]"
+      }`}
+    >
       <div
-        className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl"
+        className="flex h-14 w-14 items-center justify-center rounded-2xl transition group-hover:scale-105"
         style={{
           backgroundColor:
             "color-mix(in srgb, var(--color-primary) 10%, transparent)",
           color: "var(--color-primary)",
         }}
       >
-        <ImagePlus size={22} />
+        <ImagePlus size={25} />
       </div>
 
-      <h2 className="mt-4 text-base font-semibold text-gray-900">
-        Upload product images
-      </h2>
+      <h3 className="mt-4 text-sm font-semibold text-gray-900">
+        {images.length > 0
+          ? "Add more product images"
+          : "Upload your product images"}
+      </h3>
 
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
-        Upload clear images from different angles. AI will use them to prepare
-        the product information.
+      <p className="mt-1 max-w-sm text-xs leading-5 text-gray-500">
+        Use clear photos from different angles. Front, side, back and detail
+        shots help AI understand your product better.
       </p>
 
-      <label className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 transition hover:bg-black/[0.02]">
-        <ImagePlus size={16} />
+      <span className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-xs font-semibold text-white transition group-hover:opacity-90">
+        <ImagePlus size={15} />
         Choose images
-        <input
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          multiple
-          onChange={onUpload}
-          className="hidden"
-        />
-      </label>
-    </div>
+      </span>
 
+      <p className="mt-2 text-[11px] text-gray-400">
+        PNG, JPG or WEBP · Multiple images supported
+      </p>
+
+      <input
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        multiple
+        onChange={onUpload}
+        className="hidden"
+      />
+    </label>
+
+    {/* Image previews */}
     {images.length > 0 && (
-      <div className="mt-6">
+      <div className="mt-5">
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">
+              Uploaded images
+            </h3>
+
+            <p className="text-xs text-gray-500">
+              Review your images before analysis.
+            </p>
+          </div>
+
+          <span className="text-xs text-gray-400">
+            {images.length} selected
+          </span>
+        </div>
+
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {images.map((image, index) => (
             <div
               key={`${image}-${index}`}
-              className="aspect-square overflow-hidden rounded-2xl border border-black/10"
+              className="group relative aspect-square overflow-hidden rounded-2xl border border-black/10 bg-gray-100"
             >
               <img
                 src={image}
                 alt={`Product ${index + 1}`}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
               />
+
+              {/* Image number */}
+              <div className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-[10px] font-semibold text-white backdrop-blur-sm">
+                {index + 1}
+              </div>
             </div>
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={onAnalyse}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-primary)] px-5 py-3 text-sm font-semibold text-white transition hover:opacity-95"
-        >
-          <Sparkles size={17} />
-          Analyse product
-        </button>
+        {/* Analyse CTA */}
+        <div className="mt-5 rounded-2xl border border-[var(--color-primary)]/10 bg-[var(--color-primary)]/[0.03] p-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">
+                Ready to analyse?
+              </p>
+
+              <p className="mt-0.5 text-xs text-gray-500">
+                AI will identify product characteristics, dimensions, materials
+                and available options.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onAnalyse}
+              className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 active:scale-[0.98]"
+            >
+              <Sparkles size={16} />
+              Analyse product
+              <ArrowRight size={15} />
+            </button>
+          </div>
+        </div>
       </div>
     )}
   </div>
@@ -182,7 +267,7 @@ const ProductIntelligencePage = () => {
     <div className="min-h-full bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <header className="mb-8">
-                    <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => window.history.back()}
@@ -194,8 +279,6 @@ const ProductIntelligencePage = () => {
 
             <div>
               <h1 className="font-semibold">Product Intelligence</h1>
-
-              
             </div>
           </div>
 
@@ -210,11 +293,13 @@ const ProductIntelligencePage = () => {
         </header>
 
         {step === "upload" && (
-          <UploadStage
-            images={imageUrls}
-            onUpload={handleImageUpload}
-            onAnalyse={handleAnalyse}
-          />
+          <div className="h-[65vh] overflow-auto">
+            <UploadStage
+              images={imageUrls}
+              onUpload={handleImageUpload}
+              onAnalyse={handleAnalyse}
+            />
+          </div>
         )}
 
         {step === "analysing" && <AIProductAnalysis isProcessing />}
