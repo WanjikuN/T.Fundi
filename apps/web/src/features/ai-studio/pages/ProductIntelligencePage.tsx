@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ChangeEvent } from "react";
-import { ArrowRight, ImagePlus, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, ImagePlus, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import AIProductAnalysis from "../../catalog/components/AIProductAnalysis";
@@ -45,7 +45,6 @@ const UploadStage = ({
       <label className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 transition hover:bg-black/[0.02]">
         <ImagePlus size={16} />
         Choose images
-
         <input
           type="file"
           accept="image/png,image/jpeg,image/webp"
@@ -95,17 +94,16 @@ const ProductIntelligencePage = () => {
   const [step, setStep] = useState<StudioStep>("upload");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [analysis, setAnalysis] =
-    useState<AIProductAnalysisResponse | null>(null);
+  const [analysis, setAnalysis] = useState<AIProductAnalysisResponse | null>(
+    null,
+  );
 
   const characteristics: TenantCharacteristic[] =
     catalogSettings.characteristics.filter(
       (characteristic) => characteristic.active !== false,
     );
 
-  const handleImageUpload = (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
 
     if (!files.length) {
@@ -122,9 +120,7 @@ const ProductIntelligencePage = () => {
 
     setImageFiles((current) => [...current, ...validFiles]);
 
-    const urls = validFiles.map((file) =>
-      URL.createObjectURL(file),
-    );
+    const urls = validFiles.map((file) => URL.createObjectURL(file));
 
     setImageUrls((current) => [...current, ...urls]);
 
@@ -172,13 +168,10 @@ const ProductIntelligencePage = () => {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-6">
         <div className="max-w-md text-center">
-          <h1 className="text-xl font-semibold">
-            Workspace unavailable
-          </h1>
+          <h1 className="text-xl font-semibold">Workspace unavailable</h1>
 
           <p className="mt-2 text-sm text-muted-foreground">
-            We couldn't determine the workspace for this AI Studio
-            session.
+            We couldn't determine the workspace for this AI Studio session.
           </p>
         </div>
       </div>
@@ -189,22 +182,21 @@ const ProductIntelligencePage = () => {
     <div className="min-h-full bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <header className="mb-8">
-          <div className="flex items-center gap-2">
-            <Sparkles
-              size={17}
-              style={{
-                color: "var(--color-primary)",
-              }}
-            />
-
-            <span
-              className="text-[10px] font-bold uppercase tracking-[0.2em]"
-              style={{
-                color: "var(--color-primary)",
-              }}
+                    <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => window.history.back()}
+              className="flex cursor-pointer h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)]"
+              aria-label="Go back"
             >
-              AI Studio
-            </span>
+              <ArrowLeft size={17} />
+            </button>
+
+            <div>
+              <h1 className="font-semibold">Product Intelligence</h1>
+
+              
+            </div>
           </div>
 
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-gray-950">
@@ -212,8 +204,8 @@ const ProductIntelligencePage = () => {
           </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
-            Upload product images and let AI identify the product,
-            dimensions and characteristics configured for your workspace.
+            Upload product images and let AI identify the product, dimensions
+            and characteristics configured for your workspace.
           </p>
         </header>
 
@@ -225,9 +217,7 @@ const ProductIntelligencePage = () => {
           />
         )}
 
-        {step === "analysing" && (
-          <AIProductAnalysis isProcessing />
-        )}
+        {step === "analysing" && <AIProductAnalysis isProcessing />}
 
         {step === "analysis" && analysis && (
           <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
@@ -239,8 +229,8 @@ const ProductIntelligencePage = () => {
               </h2>
 
               <p className="mt-2 text-sm leading-6 text-gray-500">
-                Review the detected information before creating the
-                catalogue product.
+                Review the detected information before creating the catalogue
+                product.
               </p>
 
               <button

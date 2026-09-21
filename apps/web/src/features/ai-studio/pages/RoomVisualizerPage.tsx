@@ -232,13 +232,13 @@ const RoomVisualizerPage = () => {
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <header className="shrink-0 border-b border-[var(--color-border)] px-6 py-4 lg:px-8">
+      <header className="shrink-0 px-6 py-4 lg:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => window.history.back()}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)]"
+              className="cursor-pointer flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)]"
               aria-label="Go back"
             >
               <ArrowLeft size={17} />

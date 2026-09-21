@@ -17,7 +17,7 @@ const AIStudioLanding = ({
 }: Props) => {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="shrink-0 border-b border-[var(--color-border)] px-6 py-5 lg:px-8">
+      <div className="shrink-0 px-6 py-5 lg:px-8">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <div>
             <div className="mb-2 flex items-center gap-2">
@@ -47,7 +47,7 @@ const AIStudioLanding = ({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-8 lg:px-8">
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 ">
         <div className="mx-auto max-w-7xl">
           <div className="mb-6">
             <h2 className="text-lg font-semibold">
