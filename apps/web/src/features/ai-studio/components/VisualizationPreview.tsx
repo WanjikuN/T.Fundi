@@ -1,6 +1,8 @@
 import {
   Download,
+  Eraser,
   Heart,
+  Loader2,
   Maximize2,
   Minus,
   Plus,
@@ -8,6 +10,7 @@ import {
   RotateCw,
   ShoppingBag,
 } from "lucide-react";
+import { removeProductBackground } from "../api/backgroundRemoval.api";
 import { useEffect, useRef, useState } from "react";
 import type { VisualizationResult } from "../types/ai-studio.types";
 
@@ -24,17 +27,10 @@ type Point = {
 
 type DragTarget = "room" | "product" | null;
 
-const clamp = (
-  value: number,
-  min: number,
-  max: number,
-) => Math.min(Math.max(value, min), max);
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
 
-const VisualizationPreview = ({
-  result,
-  onSave,
-  onRestart,
-}: Props) => {
+const VisualizationPreview = ({ result, onSave, onRestart }: Props) => {
   /*
    * =========================================================
    * ROOM STATE
@@ -43,11 +39,10 @@ const VisualizationPreview = ({
 
   const [roomZoom, setRoomZoom] = useState(100);
 
-  const [roomPosition, setRoomPosition] =
-    useState<Point>({
-      x: 0,
-      y: 0,
-    });
+  const [roomPosition, setRoomPosition] = useState<Point>({
+    x: 0,
+    y: 0,
+  });
 
   /*
    * =========================================================
@@ -57,28 +52,68 @@ const VisualizationPreview = ({
 
   const [productScale, setProductScale] = useState(42);
 
-  const [productPosition, setProductPosition] =
-    useState<Point>({
-      x: 0,
-      y: 0,
-    });
+  const [productPosition, setProductPosition] = useState<Point>({
+    x: 0,
+    y: 0,
+  });
 
-  const [productRotation, setProductRotation] =
-    useState(0);
+  const [productRotation, setProductRotation] = useState(0);
+  const [isProductBackgroundRemoved, setIsProductBackgroundRemoved] =
+    useState(false);
 
-  const [
-    removeProductBackground,
-    setRemoveProductBackground,
-  ] = useState(false);
+  const [processedProductImage, setProcessedProductImage] = useState<
+    string | null
+  >(null);
 
+  const [removingBackground, setRemovingBackground] = useState(false);
+
+  const [backgroundRemovalError, setBackgroundRemovalError] = useState<
+    string | null
+  >(null);
+  const handleBackgroundRemoval = async () => {
+    if (!result.productImageUrl) {
+      return;
+    }
+
+    /*
+     * If we've already processed this image,
+     * simply toggle between original and
+     * transparent versions.
+     */
+    if (processedProductImage) {
+      setIsProductBackgroundRemoved((current) => !current);
+
+      return;
+    }
+
+    try {
+      setRemovingBackground(true);
+      setBackgroundRemovalError(null);
+
+      const response = await removeProductBackground(result.productImageUrl);
+
+      setProcessedProductImage(response.imageUrl);
+
+      setIsProductBackgroundRemoved(true);
+    } catch (error) {
+      console.error("Background removal failed:", error);
+
+      setBackgroundRemovalError(
+        "We couldn't remove the background. Please try again.",
+      );
+
+      setIsProductBackgroundRemoved(false);
+    } finally {
+      setRemovingBackground(false);
+    }
+  };
   /*
    * =========================================================
    * DRAG STATE
    * =========================================================
    */
 
-  const [dragging, setDragging] =
-    useState<DragTarget>(null);
+  const [dragging, setDragging] = useState<DragTarget>(null);
 
   const dragStart = useRef<Point>({
     x: 0,
@@ -104,14 +139,10 @@ const VisualizationPreview = ({
       return;
     }
 
-    const handlePointerMove = (
-      event: globalThis.PointerEvent,
-    ) => {
-      const deltaX =
-        event.clientX - dragStart.current.x;
+    const handlePointerMove = (event: globalThis.PointerEvent) => {
+      const deltaX = event.clientX - dragStart.current.x;
 
-      const deltaY =
-        event.clientY - dragStart.current.y;
+      const deltaY = event.clientY - dragStart.current.y;
 
       if (dragging === "room") {
         setRoomPosition({
@@ -132,26 +163,14 @@ const VisualizationPreview = ({
       setDragging(null);
     };
 
-    window.addEventListener(
-      "pointermove",
-      handlePointerMove,
-    );
+    window.addEventListener("pointermove", handlePointerMove);
 
-    window.addEventListener(
-      "pointerup",
-      handlePointerUp,
-    );
+    window.addEventListener("pointerup", handlePointerUp);
 
     return () => {
-      window.removeEventListener(
-        "pointermove",
-        handlePointerMove,
-      );
+      window.removeEventListener("pointermove", handlePointerMove);
 
-      window.removeEventListener(
-        "pointerup",
-        handlePointerUp,
-      );
+      window.removeEventListener("pointerup", handlePointerUp);
     };
   }, [dragging]);
 
@@ -161,24 +180,16 @@ const VisualizationPreview = ({
    * =========================================================
    */
 
-  const handleRoomPointerDown = (
-    event: React.PointerEvent<HTMLDivElement>,
-  ) => {
+  const handleRoomPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     /*
      * Don't start dragging the room if the
      * product was clicked.
      */
-    if (
-      (event.target as HTMLElement).closest(
-        "[data-product-layer]",
-      )
-    ) {
+    if ((event.target as HTMLElement).closest("[data-product-layer]")) {
       return;
     }
 
-    event.currentTarget.setPointerCapture(
-      event.pointerId,
-    );
+    event.currentTarget.setPointerCapture(event.pointerId);
 
     setDragging("room");
 
@@ -203,9 +214,7 @@ const VisualizationPreview = ({
   ) => {
     event.stopPropagation();
 
-    event.currentTarget.setPointerCapture(
-      event.pointerId,
-    );
+    event.currentTarget.setPointerCapture(event.pointerId);
 
     setDragging("product");
 
@@ -225,21 +234,12 @@ const VisualizationPreview = ({
    * =========================================================
    */
 
-  const handleWheel = (
-    event: React.WheelEvent<HTMLDivElement>,
-  ) => {
+  const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     event.preventDefault();
 
-    const zoomDelta =
-      event.deltaY > 0 ? -5 : 5;
+    const zoomDelta = event.deltaY > 0 ? -5 : 5;
 
-    setRoomZoom((current) =>
-      clamp(
-        current + zoomDelta,
-        50,
-        200,
-      ),
-    );
+    setRoomZoom((current) => clamp(current + zoomDelta, 50, 200));
   };
 
   /*
@@ -248,9 +248,7 @@ const VisualizationPreview = ({
    * =========================================================
    */
 
-  const rotateProduct = (
-    amount: number,
-  ) => {
+  const rotateProduct = (amount: number) => {
     setProductRotation((current) => {
       const next = current + amount;
 
@@ -289,7 +287,10 @@ const VisualizationPreview = ({
 
     setProductRotation(0);
 
-    setRemoveProductBackground(false);
+    setIsProductBackgroundRemoved(false);
+    setProcessedProductImage(null);
+    setRemovingBackground(false);
+    setBackgroundRemovalError(null);
 
     setDragging(null);
   };
@@ -306,8 +307,7 @@ const VisualizationPreview = ({
 
     link.href = result.roomImageUrl;
 
-    link.download =
-      "tfundi-room-visualization.jpg";
+    link.download = "tfundi-room-visualization.jpg";
 
     link.click();
   };
@@ -319,9 +319,8 @@ const VisualizationPreview = ({
    */
 
   const productImage =
-    removeProductBackground &&
-    result.productImageWithoutBackgroundUrl
-      ? result.productImageWithoutBackgroundUrl
+    isProductBackgroundRemoved && processedProductImage
+      ? processedProductImage
       : result.productImageUrl;
 
   return (
@@ -338,13 +337,10 @@ const VisualizationPreview = ({
             </span>
           </div>
 
-          <h2 className="text-2xl font-bold">
-            Your {result.productName}
-          </h2>
+          <h2 className="text-2xl font-bold">Your {result.productName}</h2>
 
           <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-            Move the room and furniture to create
-            your preferred layout.
+            Move the room and furniture to create your preferred layout.
           </p>
         </div>
 
@@ -366,9 +362,7 @@ const VisualizationPreview = ({
         onPointerDown={handleRoomPointerDown}
         onWheel={handleWheel}
         className={`relative min-h-0 flex-1 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-black/5 ${
-          dragging
-            ? "cursor-grabbing"
-            : "cursor-grab"
+          dragging ? "cursor-grabbing" : "cursor-grab"
         }`}
         style={{
           touchAction: "none",
@@ -405,13 +399,9 @@ const VisualizationPreview = ({
         {productImage && (
           <div
             data-product-layer
-            onPointerDown={
-              handleProductPointerDown
-            }
+            onPointerDown={handleProductPointerDown}
             className={`absolute left-1/2 top-1/2 z-20 select-none ${
-              dragging === "product"
-                ? "cursor-grabbing"
-                : "cursor-grab"
+              dragging === "product" ? "cursor-grabbing" : "cursor-grab"
             }`}
             style={{
               width: `${productScale}%`,
@@ -424,13 +414,10 @@ const VisualizationPreview = ({
                 rotateY(${productRotation}deg)
               `,
 
-              transformStyle:
-                "preserve-3d",
+              transformStyle: "preserve-3d",
 
               transition:
-                dragging === "product"
-                  ? "none"
-                  : "transform 150ms ease",
+                dragging === "product" ? "none" : "transform 150ms ease",
             }}
           >
             <img
@@ -447,13 +434,10 @@ const VisualizationPreview = ({
         ================================================== */}
 
         <div className="absolute left-4 top-4 z-30 rounded-xl border border-white/20 bg-black/60 px-3 py-2 text-white backdrop-blur">
-          <div className="text-xs font-medium">
-            Interactive preview
-          </div>
+          <div className="text-xs font-medium">Interactive preview</div>
 
           <div className="mt-1 text-[11px] opacity-70">
-            Drag room • Drag furniture • Scroll
-            to zoom
+            Drag room • Drag furniture • Scroll to zoom
           </div>
         </div>
 
@@ -465,13 +449,7 @@ const VisualizationPreview = ({
           <button
             type="button"
             onClick={() =>
-              setRoomZoom((current) =>
-                clamp(
-                  current - 10,
-                  50,
-                  200,
-                ),
-              )
+              setRoomZoom((current) => clamp(current - 10, 50, 200))
             }
             className="rounded-lg p-2 transition hover:bg-white/10"
             aria-label="Zoom out"
@@ -486,13 +464,7 @@ const VisualizationPreview = ({
           <button
             type="button"
             onClick={() =>
-              setRoomZoom((current) =>
-                clamp(
-                  current + 10,
-                  50,
-                  200,
-                ),
-              )
+              setRoomZoom((current) => clamp(current + 10, 50, 200))
             }
             className="rounded-lg p-2 transition hover:bg-white/10"
             aria-label="Zoom in"
@@ -510,13 +482,9 @@ const VisualizationPreview = ({
 
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-medium">
-                Product size
-              </span>
+              <span className="text-xs font-medium">Product size</span>
 
-              <span className="text-xs opacity-70">
-                {productScale}%
-              </span>
+              <span className="text-xs opacity-70">{productScale}%</span>
             </div>
 
             <input
@@ -524,13 +492,119 @@ const VisualizationPreview = ({
               min="20"
               max="70"
               value={productScale}
+              onChange={(event) => setProductScale(Number(event.target.value))}
+              className="w-full"
+            />
+          </div>
+
+          {/* Product rotation */}
+
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-medium">Product rotation</span>
+
+              <span className="text-xs opacity-70">{productRotation}°</span>
+            </div>
+
+            <input
+              type="range"
+              min="-180"
+              max="180"
+              value={productRotation}
               onChange={(event) =>
-                setProductScale(
-                  Number(event.target.value),
-                )
+                setProductRotation(Number(event.target.value))
               }
               className="w-full"
             />
+
+            <div className="mt-2 flex justify-between">
+              <button
+                type="button"
+                onClick={() => rotateProduct(-15)}
+                className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition hover:bg-white/10"
+              >
+                <RotateCcw size={13} />
+                Left
+              </button>
+
+              <button
+                type="button"
+                onClick={() => rotateProduct(15)}
+                className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition hover:bg-white/10"
+              >
+                Right
+                <RotateCw size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* Remove background */}
+
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-medium">Product background</p>
+
+                <p className="mt-0.5 text-[10px] opacity-60">
+                  {processedProductImage
+                    ? "Furniture isolation is ready"
+                    : "Isolate the furniture from its image"}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleBackgroundRemoval}
+                disabled={!result.productImageUrl || removingBackground}
+                className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition ${
+                  processedProductImage && isProductBackgroundRemoved
+                    ? "bg-[var(--color-primary)] text-white"
+                    : "bg-white/10 text-white hover:bg-white/15"
+                } ${removingBackground ? "cursor-wait opacity-70" : ""} ${
+                  !result.productImageUrl ? "cursor-not-allowed opacity-40" : ""
+                }`}
+              >
+                {removingBackground ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    Removing...
+                  </>
+                ) : processedProductImage ? (
+                  <>
+                    <Eraser size={14} />
+
+                    {isProductBackgroundRemoved
+                      ? "Background removed"
+                      : "Use isolated image"}
+                  </>
+                ) : (
+                  <>
+                    <Eraser size={14} />
+                    Remove background
+                  </>
+                )}
+              </button>
+            </div>
+
+            {backgroundRemovalError && (
+              <p className="mt-2 text-[10px] text-red-300">
+                {backgroundRemovalError}
+              </p>
+            )}
+
+            {processedProductImage && (
+              <button
+                type="button"
+                onClick={() =>
+                  setIsProductBackgroundRemoved((current) => !current)
+                }
+                className="mt-2 text-[10px] underline opacity-60 transition hover:opacity-100"
+              >
+                {isProductBackgroundRemoved
+                  ? "Use original image"
+                  : "Use isolated image"}
+              </button>
+            )}
           </div>
 
           {/* Product rotation */}
@@ -661,9 +735,7 @@ const VisualizationPreview = ({
 
       <div className="mt-5 flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-medium">
-            {result.productName}
-          </p>
+          <p className="text-sm font-medium">{result.productName}</p>
 
           <p className="text-xs text-[var(--color-muted-foreground)]">
             Product from your catalogue
