@@ -302,7 +302,8 @@ const VisualizationPreview = ({ result, onSave, onRestart }: Props) => {
    */
 
   const handleDownload = () => {
-    const link = document.createElement("a");
+    const link =
+      document.createElement("a");
 
     link.href = result.roomImageUrl;
 
@@ -603,6 +604,113 @@ const VisualizationPreview = ({ result, onSave, onRestart }: Props) => {
                   ? "Use original image"
                   : "Use isolated image"}
               </button>
+            )}
+          </div>
+
+          {/* Product rotation */}
+
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-medium">
+                Product rotation
+              </span>
+
+              <span className="text-xs opacity-70">
+                {productRotation}°
+              </span>
+            </div>
+
+            <input
+              type="range"
+              min="-180"
+              max="180"
+              value={productRotation}
+              onChange={(event) =>
+                setProductRotation(
+                  Number(event.target.value),
+                )
+              }
+              className="w-full"
+            />
+
+            <div className="mt-2 flex justify-between">
+              <button
+                type="button"
+                onClick={() =>
+                  rotateProduct(-15)
+                }
+                className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition hover:bg-white/10"
+              >
+                <RotateCcw size={13} />
+                Left
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  rotateProduct(15)
+                }
+                className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs transition hover:bg-white/10"
+              >
+                Right
+                <RotateCw size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* Remove background */}
+
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-medium">
+                  Remove background
+                </p>
+
+                <p className="mt-0.5 text-[10px] opacity-60">
+                  Isolate the furniture
+                </p>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={
+                  removeProductBackground
+                }
+                onClick={() =>
+                  setRemoveProductBackground(
+                    (current) => !current,
+                  )
+                }
+                disabled={
+                  !result.productImageWithoutBackgroundUrl
+                }
+                className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+                  removeProductBackground
+                    ? "bg-[var(--color-primary)]"
+                    : "bg-white/20"
+                } ${
+                  !result.productImageWithoutBackgroundUrl
+                    ? "cursor-not-allowed opacity-40"
+                    : ""
+                }`}
+              >
+                <span
+                  className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                    removeProductBackground
+                      ? "translate-x-6"
+                      : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {!result.productImageWithoutBackgroundUrl && (
+              <p className="mt-2 text-[10px] opacity-50">
+                Background removal is not available
+                for this product yet.
+              </p>
             )}
           </div>
         </div>

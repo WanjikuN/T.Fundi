@@ -38,6 +38,7 @@ export type VisualizationResult = {
   productImageUrl: string;
   selectedOptions: Record<string, string>;
   createdAt: string;
+  productImageWithoutBackgroundUrl?: string;
 };
 
 export type SavedDesign = VisualizationResult & {
